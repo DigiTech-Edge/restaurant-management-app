@@ -19,7 +19,11 @@ const config: Config = {
   },
   darkMode: "class",
   plugins: [
-    nextui(),
+    nextui({
+      layout: {
+        dividerWeight: "2px",
+      },
+    }),
     require("tailwindcss-animate"),
     require("tailwind-scrollbar"),
   ],

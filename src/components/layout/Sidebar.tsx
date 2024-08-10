@@ -35,7 +35,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen sticky top-0">
       {/* Main routes sidebar */}
       <div className="flex flex-col bg-[#5F0101] items-center w-20 text-white mx-4 rounded-b-lg shadow-lg flex-grow">
         {mainRoutes.map((route, index) => {
