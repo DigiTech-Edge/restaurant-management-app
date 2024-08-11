@@ -5,12 +5,13 @@ import { categories } from "@/lib/constants";
 import { getCategoryIcon } from "@/helpers/categoryIcon";
 import { updateSearchParams } from "@/utils/actions/searchParams.action";
 import ProductsTable from "@/components/pages/menu/ProductsTable";
+import { Product } from "@/types/ProductTypes";
 
 function SearchBarFallback() {
   return <>Loading categories...</>;
 }
 
-const sampleProducts = [
+const sampleProducts: Product[] = [
   {
     id: "1",
     name: "Bruschetta",

@@ -24,6 +24,7 @@ import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { categories } from "@/lib/constants";
+import { Product } from "@/types/ProductTypes";
 
 const columns = [
   { key: "name", label: "Product Name" },
@@ -36,25 +37,18 @@ const columns = [
 
 const schema = z.object({
   name: z.string().min(1, "Product name is required"),
-  ingredients: z
-    .array(z.string().min(1, "Ingredient is required"))
-    .min(1, "At least one ingredient is required"),
+  ingredients: z.string().min(1, "Ingredients are required"),
   category: z.string().min(1, "Category is required"),
-  price: z.number().min(0, "Price must be a positive number"),
+  price: z.number().min(1, "Price is required"),
   availability: z.enum(["Available", "Unavailable"]),
 });
 
 // Update the ProductFormData interface
-interface ProductFormData {
+interface ProductFormData extends Omit<Product, "id"> {
   id?: string;
-  name: string;
-  ingredients: { value: string }[];
-  category: string;
-  price: number;
-  availability: string;
 }
 
-const ProductsTable = ({ products }: any) => {
+const ProductsTable = ({ products }: { products: Product[] }) => {
   const [page, setPage] = React.useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductFormData | null>(
@@ -74,23 +68,43 @@ const ProductsTable = ({ products }: any) => {
     control,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm<ProductFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: "",
-      ingredients: [{ value: "" }],
+      ingredients: "",
       category: "",
       price: 0,
       availability: "Available",
     },
   });
 
+  const ingredients = watch("ingredients");
+
+  const handleIngredientChange = (index: number, value: string) => {
+    const ingredientArray = ingredients.split(",").map((i) => i.trim());
+    ingredientArray[index] = value;
+    setValue("ingredients", ingredientArray.join(", "));
+  };
+
+  const addIngredient = () => {
+    setValue("ingredients", ingredients ? `${ingredients}, ` : "");
+  };
+
+  const removeIngredient = (index: number) => {
+    const ingredientArray = ingredients.split(",").map((i) => i.trim());
+    ingredientArray.splice(index, 1);
+    setValue("ingredients", ingredientArray.join(", "));
+  };
+
   useEffect(() => {
     if (!isModalOpen) {
       reset({
         name: "",
-        ingredients: [{ value: "" }],
+        ingredients: "",
         category: "",
         price: 0,
         availability: "Available",
@@ -98,15 +112,13 @@ const ProductsTable = ({ products }: any) => {
     }
   }, [isModalOpen]);
 
-  const { fields, append, remove } = useFieldArray<ProductFormData>({
-    control,
-    name: "ingredients",
-  });
-
   const onSubmit = (data: ProductFormData) => {
     const formattedData = {
       ...data,
-      ingredients: data.ingredients.map((ing) => ing.value).join(", "),
+      ingredients: data.ingredients
+        .split(",")
+        .map((i) => i.trim())
+        .join(", "),
       price: parseFloat(data.price.toString()),
     };
     console.log(formattedData);
@@ -118,9 +130,7 @@ const ProductsTable = ({ products }: any) => {
     if (product) {
       const formattedProduct: ProductFormData = {
         ...product,
-        ingredients: product.ingredients
-          .split(",")
-          .map((ing: string) => ({ value: ing.trim() })),
+        ingredients: product.ingredients,
         price: parseFloat(product.price),
       };
       setEditingProduct(formattedProduct);
@@ -129,7 +139,7 @@ const ProductsTable = ({ products }: any) => {
       setEditingProduct(null);
       reset({
         name: "",
-        ingredients: [{ value: "" }],
+        ingredients: "",
         category: "",
         price: 0,
         availability: "Available",
@@ -261,30 +271,25 @@ const ProductsTable = ({ products }: any) => {
                   )}
                 />
                 <p className="text-lg font-bold">Ingredients</p>
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex items-center space-x-2">
-                    <Controller
-                      name={`ingredients.${index}.value` as const}
-                      control={control}
-                      render={({ field }) => (
-                        <Input
-                          {...field}
-                          label={`Ingredient ${index + 1}`}
-                          placeholder="Enter ingredient"
-                          radius="sm"
-                          errorMessage={
-                            errors.ingredients?.[index]?.value?.message
-                          }
-                          isInvalid={!!errors.ingredients?.[index]?.value}
-                        />
-                      )}
+                {ingredients.split(",").map((ingredient, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <Input
+                      value={ingredient.trim()}
+                      onChange={(e) =>
+                        handleIngredientChange(index, e.target.value)
+                      }
+                      label={`Ingredient ${index + 1}`}
+                      placeholder="Enter ingredient"
+                      radius="sm"
                     />
                     <Button
                       color="danger"
                       variant="light"
                       isIconOnly
-                      onClick={() => remove(index)}
-                      disabled={index === 0}
+                      onClick={() => removeIngredient(index)}
+                      disabled={
+                        index === 0 && ingredients.split(",").length === 1
+                      }
                     >
                       <FiTrash2 />
                     </Button>
@@ -292,7 +297,7 @@ const ProductsTable = ({ products }: any) => {
                 ))}
                 <div className="flex justify-end">
                   <Button
-                    onClick={() => append({ value: "" })}
+                    onClick={addIngredient}
                     variant="light"
                     color="primary"
                   >
