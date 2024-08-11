@@ -92,10 +92,11 @@ export default function Menu({
                 name="All"
                 quantity={20}
                 color={selectedCategory === "" ? "bg-[#5F0101]" : "bg-gray-700"}
+                delay={0}
               />
             </button>
           </form>
-          {categories.map((category) => (
+          {categories.map((category, index) => (
             <form key={category.name} action={updateSearchParams}>
               <input type="hidden" name="category" value={category.name} />
               <input type="hidden" name="_url" value="/menu" />
@@ -110,6 +111,7 @@ export default function Menu({
                       ? "bg-[#5F0101]"
                       : "bg-gray-700"
                   }
+                  delay={(index + 1) * 0.1}
                 />
               </button>
             </form>

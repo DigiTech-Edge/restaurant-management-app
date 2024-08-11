@@ -25,6 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { categories } from "@/lib/constants";
 import { Product } from "@/types/ProductTypes";
+import { motion } from "framer-motion";
 
 const columns = [
   { key: "name", label: "Product Name" },
@@ -178,7 +179,11 @@ const ProductsTable = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="flex justify-end mb-4">
         <Button
           className="bg-[#5f0101] text-white"
@@ -406,7 +411,7 @@ const ProductsTable = ({ products }: { products: Product[] }) => {
           </form>
         </ModalContent>
       </Modal>
-    </>
+    </motion.div>
   );
 };
 

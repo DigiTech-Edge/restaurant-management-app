@@ -23,7 +23,7 @@ const Sidebar = () => {
     { name: "Home", icon: FaHome, path: "/" },
     { name: "Orders", icon: FaUtensils, path: "/orders" },
     { name: "Menu", icon: FaListAlt, path: "/menu" },
-    { name: "Kitchen Management", icon: FaUsers, path: "/kitchen" },
+    { name: "Kitchen Management", icon: FaUsers, path: "/kitchen-management" },
     { name: "Reservations", icon: FaConciergeBell, path: "/reservations" },
     { name: "Report", icon: FaFileAlt, path: "/report" },
   ];
