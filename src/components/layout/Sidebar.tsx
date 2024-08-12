@@ -20,7 +20,7 @@ const Sidebar = () => {
   const router = useRouter();
 
   const mainRoutes = [
-    { name: "Home", icon: FaHome, path: "/" },
+    { name: "Dashboard", icon: FaHome, path: "/" },
     { name: "Orders", icon: FaUtensils, path: "/orders" },
     { name: "Menu", icon: FaListAlt, path: "/menu" },
     { name: "Kitchen Management", icon: FaUsers, path: "/kitchen-management" },
