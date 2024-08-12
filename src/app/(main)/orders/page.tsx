@@ -155,17 +155,17 @@ export default function Orders({
   return (
     <div>
       <PageHeader title="Orders" />
-      <div className="flex flex-wrap gap-6 my-8">
+      <div className="flex md:flex-row flex-col flex-wrap gap-6 my-8">
         {orderStatuses.map((orderStatus) => (
           <form
             key={orderStatus}
             action={updateSearchParams}
-            // className="flex-grow"
+            className="flex-grow md:flex-grow-0"
           >
             <input type="hidden" name="status" value={orderStatus} />
             <button
               type="submit"
-              className={`w-60 min-w-[8rem] py-2 rounded-lg text-base ${
+              className={`w-full md:w-60 min-w-[8rem] py-2 rounded-lg text-base ${
                 status.toLowerCase() === orderStatus.toLowerCase()
                   ? "bg-[#5F0101] text-white"
                   : "bg-gray-200 text-[#5F0101] hover:opacity-70"
