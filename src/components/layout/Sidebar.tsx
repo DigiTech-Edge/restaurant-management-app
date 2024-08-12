@@ -31,7 +31,7 @@ const Sidebar = () => {
   const secondaryRoutes = [
     // { name: "Profile", icon: FaUser, path: "/profile" },
     { name: "Settings", icon: FaCog, path: "/settings" },
-    { name: "Logout", icon: FaSignOutAlt, path: "/logout" },
+    { name: "Logout", icon: FaSignOutAlt, path: "/logout", action: true },
   ];
 
   return (
@@ -65,12 +65,15 @@ const Sidebar = () => {
           return (
             <motion.div
               key={index}
-              whileHover={{ scale: 1.1 }}
-              className={`flex flex-col items-center py-4 cursor-pointer w-full ${
-                isActive ? "bg-maroon-light" : ""
-              }`}
-              onClick={() => router.push(route.path)}
+              whileHover={{ scale: 1.08 }}
+              className={`flex flex-col relative items-center py-4 cursor-pointer w-full `}
+              onClick={() =>
+                route.action ? console.log("Logout") : router.push(route.path)
+              }
             >
+              {isActive && !route.action && (
+                <span className="absolute left-0 top-0 w-[6px] h-full bg-white " />
+              )}
               <route.icon size={28} />
               <span className="text-[9px] text-center mt-1">{route.name}</span>
             </motion.div>
