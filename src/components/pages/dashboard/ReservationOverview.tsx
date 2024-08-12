@@ -29,6 +29,8 @@ const ReservationOverview: React.FC<{ reservations: ReservationSlot[] }> = ({
               </div>
               <Progress
                 value={(slot.reserved / (slot.reserved + slot.available)) * 100}
+                size="sm"
+                radius="full"
                 classNames={{
                   indicator: "bg-[#5F0101]",
                 }}
