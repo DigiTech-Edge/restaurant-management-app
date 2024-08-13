@@ -82,7 +82,7 @@ export default function Menu({
       <PageHeaderSearch title="Menu" />
       <h1 className="text-xl font-bold">Categories</h1>
       <Suspense fallback={<SearchBarFallback />}>
-        <div className="flex flex-wrap justify-center gap-4 my-8">
+        <div className="flex gap-4 my-8 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-[#5F0101]">
           <form action={updateSearchParams}>
             <input type="hidden" name="category" value="" />
             <input type="hidden" name="_url" value="/menu" />
