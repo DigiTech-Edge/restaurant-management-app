@@ -20,13 +20,13 @@ const DashboardSummary: React.FC<{ data: SummaryData }> = ({ data }) => {
   const summaryItems = [
     { title: "Total Orders", value: data.totalOrders, icon: FaShoppingCart },
     {
-      title: "Total Revenue",
-      value: `GHS ${data.totalRevenue.toFixed(2)}`,
+      title: "Total Revenue (GHS)",
+      value: `${data.totalRevenue.toFixed(2)}`,
       icon: FaDollarSign,
     },
     {
-      title: "Average Order Value",
-      value: `GHS ${data.averageOrderValue.toFixed(2)}`,
+      title: "Average Order (GHS)",
+      value: `${data.averageOrderValue.toFixed(2)}`,
       icon: FaChartLine,
     },
     {
