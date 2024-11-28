@@ -46,7 +46,7 @@ const Sidebar = () => {
 
   const handleNavigation = (path: string, action?: boolean) => {
     if (action) {
-      console.log("Logout");
+      router.push("/login");
     } else {
       router.push(path);
     }

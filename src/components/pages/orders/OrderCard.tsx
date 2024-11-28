@@ -48,7 +48,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
 
   return (
     <motion.div
-      className="w-[382px] p-4 rounded-lg h-fit"
+      className="w-fit p-4 rounded-lg h-fit"
       style={{ backgroundColor }}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
