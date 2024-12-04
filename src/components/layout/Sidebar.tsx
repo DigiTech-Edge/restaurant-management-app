@@ -24,12 +24,12 @@ const Sidebar = () => {
     { name: "Dashboard", icon: FaHome, path: "/", action: false },
     { name: "Orders", icon: FaUtensils, path: "/orders", action: false },
     { name: "Menu", icon: FaListAlt, path: "/menu", action: false },
-    {
-      name: "Kitchen Management",
-      icon: FaUsers,
-      path: "/kitchen-management",
-      action: false,
-    },
+    // {
+    //   name: "Kitchen Management",
+    //   icon: FaUsers,
+    //   path: "/kitchen-management",
+    //   action: false,
+    // },
     {
       name: "Reservations",
       icon: FaConciergeBell,
