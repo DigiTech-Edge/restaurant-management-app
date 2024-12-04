@@ -23,9 +23,9 @@ const AuthCard = ({
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background circles */}
-      <div className="absolute -right-[30%] top-0 bottom-0 w-[700px] rounded-l-full bg-[#5F0101] opacity-40" />
-      <div className="absolute -right-[25%] top-0 bottom-0 w-[550px] rounded-l-full bg-[#5F0101] opacity-30" />
-      <div className="absolute -right-[18%] top-0 bottom-0 w-[350px] rounded-l-full bg-[#5F0101]" />
+      <div className="absolute -right-[23%] top-0 bottom-0 w-[700px] rounded-l-full bg-[#5F0101] opacity-40" />
+      <div className="absolute -right-[18%] top-0 bottom-0 w-[550px] rounded-l-full bg-[#5F0101] opacity-30" />
+      <div className="absolute -right-[10%] top-0 bottom-0 w-[350px] rounded-l-full bg-[#5F0101]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
