@@ -1,6 +1,6 @@
 import React from "react";
 import { FaUtensils, FaLock } from "react-icons/fa";
-import { updateSearchParams } from "@/utils/actions/searchParams.action";
+import { updateSearchParams } from "@/services/actions/searchParams.action";
 
 interface SettingsSidebarProps {
   activeSection: string;

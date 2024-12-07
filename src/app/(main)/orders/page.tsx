@@ -1,7 +1,7 @@
 import PageHeader from "@/components/global/PageHeader";
 import CompletedCard from "@/components/pages/orders/CompletedCard";
 import OrderCard from "@/components/pages/orders/OrderCard";
-import { updateSearchParams } from "@/utils/actions/searchParams.action";
+import { updateSearchParams } from "@/services/actions/searchParams.action";
 
 const orderStatuses = ["Incoming", "Processing", "Completed"];
 

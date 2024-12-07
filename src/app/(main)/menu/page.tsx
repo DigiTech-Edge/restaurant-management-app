@@ -3,7 +3,7 @@ import PageHeaderSearch from "@/components/global/PageHeaderSearch";
 import CategoryCard from "@/components/pages/menu/CategoryCard";
 import { categories } from "@/lib/constants";
 import { getCategoryIcon } from "@/helpers/categoryIcon";
-import { updateSearchParams } from "@/utils/actions/searchParams.action";
+import { updateSearchParams } from "@/services/actions/searchParams.action";
 import ProductsTable from "@/components/pages/menu/ProductsTable";
 import { Product } from "@/types/ProductTypes";
 

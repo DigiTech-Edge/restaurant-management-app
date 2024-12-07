@@ -14,6 +14,8 @@ import {
   FaBars,
 } from "react-icons/fa";
 import { usePathname, useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
+import toast from "react-hot-toast";
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -44,9 +46,17 @@ const Sidebar = () => {
     { name: "Logout", icon: FaSignOutAlt, path: "/logout", action: true },
   ];
 
-  const handleNavigation = (path: string, action?: boolean) => {
+  const handleNavigation = async (path: string, action?: boolean) => {
     if (action) {
-      router.push("/login");
+      try {
+        await signOut({ redirect: false });
+        toast.success("Logged out successfully");
+        router.push("/login");
+        router.refresh();
+      } catch (error) {
+        toast.error("Failed to logout");
+        router.push("/login");
+      }
     } else {
       router.push(path);
     }
