@@ -18,6 +18,7 @@ import {
   Input,
   Select,
   SelectItem,
+  Chip,
 } from "@nextui-org/react";
 import { FiPlus, FiEdit2, FiTrash2, FiEdit } from "react-icons/fi";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
@@ -26,6 +27,7 @@ import * as z from "zod";
 import { categories } from "@/lib/constants";
 import { Product } from "@/types/ProductTypes";
 import { motion } from "framer-motion";
+import { FaSearch } from "react-icons/fa";
 
 const columns = [
   { key: "name", label: "Product Name" },
@@ -155,13 +157,12 @@ const ProductsTable = ({ products }: { products: Product[] }) => {
     switch (columnKey) {
       case "availability":
         return (
-          <span
-            className={
-              cellValue === "Available" ? "text-green-500" : "text-red-500"
-            }
+          <Chip
+            color={cellValue === "Available" ? "success" : "danger"}
+            variant="flat"
           >
             {cellValue}
-          </span>
+          </Chip>
         );
       case "actions":
         return (
@@ -213,7 +214,7 @@ const ProductsTable = ({ products }: { products: Product[] }) => {
           </div>
         }
         classNames={{
-          wrapper: "max-h-[450px] text-black",
+          wrapper: "min-h-[400px] text-black",
         }}
       >
         <TableHeader columns={columns}>
@@ -229,8 +230,10 @@ const ProductsTable = ({ products }: { products: Product[] }) => {
         <TableBody
           items={items}
           emptyContent={
-            <div className="text-2xl flex justify-center items-center h-full">
-              No products found
+            <div className="flex flex-col items-center justify-center h-[300px] text-gray-500">
+              <FaSearch size={40} className="mb-4 text-gray-400" />
+              <p className="text-lg font-semibold">No Products Found</p>
+              <p className="text-sm">Try adjusting your search or filters</p>
             </div>
           }
         >

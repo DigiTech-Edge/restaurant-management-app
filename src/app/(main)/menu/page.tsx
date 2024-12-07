@@ -1,11 +1,12 @@
+"use client";
+
 import { Suspense } from "react";
 import PageHeaderSearch from "@/components/global/PageHeaderSearch";
-import CategoryCard from "@/components/pages/menu/CategoryCard";
 import { categories } from "@/lib/constants";
-import { getCategoryIcon } from "@/helpers/categoryIcon";
-import { updateSearchParams } from "@/services/actions/searchParams.action";
-import ProductsTable from "@/components/pages/menu/ProductsTable";
 import { Product } from "@/types/ProductTypes";
+import ProductsTable from "@/components/pages/menu/ProductsTable";
+import MenuClientWrapper from "@/components/pages/menu/MenuClientWrapper";
+import { useSearchStore } from "@/store/searchStore";
 
 function SearchBarFallback() {
   return <>Loading categories...</>;
@@ -68,55 +69,31 @@ export default function Menu({
   searchParams: { category?: string };
 }) {
   const selectedCategory = searchParams.category || "";
+  const searchQuery = useSearchStore((state) => state.searchQuery);
 
-  // Filter products based on the selected category
-  const filteredProducts = selectedCategory
-    ? sampleProducts.filter(
-        (product) =>
-          product.category.toLowerCase() === selectedCategory.toLowerCase()
-      )
-    : sampleProducts;
+  // Filter products based on both category and search query
+  const filteredProducts = sampleProducts.filter((product) => {
+    const matchesCategory = selectedCategory
+      ? product.category.toLowerCase() === selectedCategory.toLowerCase()
+      : true;
+
+    const matchesSearch = searchQuery
+      ? product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.ingredients.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div>
       <PageHeaderSearch title="Menu" />
-      <h1 className="text-xl font-bold">Categories</h1>
       <Suspense fallback={<SearchBarFallback />}>
-        <div className="flex gap-4 my-8 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-[#5F0101]">
-          <form action={updateSearchParams}>
-            <input type="hidden" name="category" value="" />
-            <input type="hidden" name="_url" value="/menu" />
-            <button type="submit" className="w-full">
-              <CategoryCard
-                icon={getCategoryIcon("All")}
-                name="All"
-                quantity={20}
-                color={selectedCategory === "" ? "bg-[#5F0101]" : "bg-gray-700"}
-                delay={0}
-              />
-            </button>
-          </form>
-          {categories.map((category, index) => (
-            <form key={category.name} action={updateSearchParams}>
-              <input type="hidden" name="category" value={category.name} />
-              <input type="hidden" name="_url" value="/menu" />
-              <button type="submit" className="w-full">
-                <CategoryCard
-                  icon={getCategoryIcon(category.name)}
-                  name={category.name}
-                  quantity={20}
-                  color={
-                    selectedCategory.toLowerCase() ===
-                    category.name.toLowerCase()
-                      ? "bg-[#5F0101]"
-                      : "bg-gray-700"
-                  }
-                  delay={(index + 1) * 0.1}
-                />
-              </button>
-            </form>
-          ))}
-        </div>
+        <MenuClientWrapper
+          selectedCategory={selectedCategory}
+          categories={categories}
+        />
       </Suspense>
       <ProductsTable products={filteredProducts} />
     </div>

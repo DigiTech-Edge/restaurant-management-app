@@ -1,38 +1,51 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
+import { FaEdit } from "react-icons/fa";
+import { Button } from "@nextui-org/react";
 
 interface CategoryCardProps {
-  icon: string;
   name: string;
-  quantity?: number;
-  color: string;
-  delay: number;
+  quantity: number;
+  color?: string;
+  delay?: number;
+  onEdit?: () => void;
+  showEdit?: boolean;
 }
 
 const CategoryCard: React.FC<CategoryCardProps> = ({
-  icon,
   name,
-  quantity = 20,
-  color,
-  delay,
+  quantity,
+  color = "bg-gray-700",
+  delay = 0,
+  onEdit,
+  showEdit = true,
 }) => {
   return (
     <motion.div
-      className={`flex flex-col justify-between p-2 rounded-lg ${color} w-32 h-24 cursor-pointer hover:opacity-75`}
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      whileHover={{ scale: 1.05 }}
+      className={`relative group p-4 rounded-lg min-w-[150px] ${color} text-white`}
     >
-      <div className="flex justify-end">
-        <Image src={icon} alt={name} width={24} height={24} />
-      </div>
-      <div className="flex flex-col items-start">
-        <p className="text-sm font-semibold mt-2 text-white">{name}</p>
-        <p className="text-xs text-gray-200">{quantity} items</p>
+      <div className="flex flex-col items-center gap-2">
+        <h3 className="text-lg font-semibold">{name}</h3>
+        <p className="text-sm opacity-80">{quantity} items</p>
+        {showEdit && onEdit && (
+          <Button
+            isIconOnly
+            size="sm"
+            variant="light"
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-white"
+            onClick={(e) => {
+              e.preventDefault();
+              onEdit();
+            }}
+          >
+            <FaEdit />
+          </Button>
+        )}
       </div>
     </motion.div>
   );

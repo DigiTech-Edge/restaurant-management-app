@@ -9,13 +9,15 @@ import {
   useDisclosure,
 } from "@nextui-org/react";
 import { motion } from "framer-motion";
+import { FaPrint } from "react-icons/fa";
 import OrderCard from "./OrderCard";
+import InvoiceModal from "./InvoiceModal";
 
 interface OrderItem {
   name: string;
   quantity: number;
-  ingredients: string;
   price: number;
+  ingredients: string;
 }
 
 interface CompletedCardProps {
@@ -38,6 +40,7 @@ const CompletedCard: React.FC<CompletedCardProps> = ({
   delay,
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
 
   return (
     <>
@@ -73,7 +76,7 @@ const CompletedCard: React.FC<CompletedCardProps> = ({
               <span className="font-semibold">Status</span>
               <span className="text-green-500">Completed</span>
             </div>
-            <div className="flex flex-col w-[10%] min-w-[80px]">
+            <div className="flex flex-col gap-2 w-[10%] min-w-[80px]">
               <Button
                 onClick={onOpen}
                 size="sm"
@@ -81,6 +84,14 @@ const CompletedCard: React.FC<CompletedCardProps> = ({
                 className="w-full"
               >
                 View
+              </Button>
+              <Button
+                onClick={() => setIsInvoiceOpen(true)}
+                size="sm"
+                className="w-full bg-[#5F0101] text-white"
+                startContent={<FaPrint />}
+              >
+                Print
               </Button>
             </div>
           </div>
@@ -104,6 +115,18 @@ const CompletedCard: React.FC<CompletedCardProps> = ({
           </ModalBody>
         </ModalContent>
       </Modal>
+
+      <InvoiceModal
+        isOpen={isInvoiceOpen}
+        onClose={() => setIsInvoiceOpen(false)}
+        orders={orders}
+        orderTime={orderTime}
+        tableNumber={tableNumber}
+        orderNumber={orderNumber}
+        paymentMethod={paymentMethod}
+        orderType={orderType}
+        isCompleted={true}
+      />
     </>
   );
 };
