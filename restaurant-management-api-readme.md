@@ -99,6 +99,24 @@ This API provides a comprehensive set of endpoints for managing restaurant opera
   }
   ```
 
+### Get All Categories
+
+- **GET** `/main/get-all-categories/{restaurantId}`
+- Headers: Authorization
+- Response:
+  ```json
+  {
+    "message": "Categories fetched successfully",
+    "categories": [
+      {
+        "id": "",
+        "name": "",
+        "restaurantId": ""
+      }
+    ]
+  }
+  ```
+
 ## Menu Item Management
 
 ### Create Menu Item

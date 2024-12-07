@@ -29,6 +29,60 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
+## API Endpoints
+
+### Menu Management
+
+#### Get All Menu Items
+```http
+GET /restaurant/main/get-all-menu-items/:restaurantId
+```
+Retrieves all menu items for a specific restaurant.
+
+**Parameters:**
+- `restaurantId`: Restaurant ID (path parameter)
+
+**Headers:**
+- `Authorization`: Bearer token
+
+**Response:**
+- Returns an array of menu items
+
+#### Delete Category
+```http
+DELETE /restaurant/main/delete-category/:categoryId
+```
+Deletes a specific category.
+
+**Parameters:**
+- `categoryId`: Category ID (path parameter)
+
+**Headers:**
+- `Authorization`: Bearer token
+
+**Notes:**
+- Categories associated with menu items cannot be deleted
+- Returns no response body
+
+### Table Management
+
+#### Delete Table
+```http
+DELETE /restaurant/main/delete-table/:tableId
+```
+Deletes a specific table from the restaurant.
+
+**Parameters:**
+- `tableId`: Table ID (path parameter)
+
+**Headers:**
+- `Authorization`: Bearer token
+
+**Notes:**
+- Tables with reservations for today or future dates cannot be deleted
+- Tables with unpaid orders cannot be deleted
+- Returns no response body
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

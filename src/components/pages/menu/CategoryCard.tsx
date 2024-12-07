@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { FaEdit } from "react-icons/fa";
 import { Button } from "@nextui-org/react";
+import { Category } from "@/types/menu.types";
 
 interface CategoryCardProps {
   name: string;
@@ -27,7 +28,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      className={`relative group p-4 rounded-lg min-w-[150px] ${color} text-white`}
+      className={`relative group p-4 rounded-lg min-w-[150px] ${color} text-white hover:bg-opacity-90 transition-colors`}
     >
       <div className="flex flex-col items-center gap-2">
         <h3 className="text-lg font-semibold">{name}</h3>
