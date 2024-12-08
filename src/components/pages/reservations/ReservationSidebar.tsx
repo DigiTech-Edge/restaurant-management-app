@@ -75,10 +75,11 @@ export function ReservationSidebar({
   return (
     <div
       className={`
-        fixed inset-y-0 left-0 w-[85vw] sm:w-[400px] bg-[#5F010114]
+        fixed inset-y-0 right-0 w-[85vw] md:w-[400px] bg-white/95 shadow-lg
         transform transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full sm:translate-x-0"}
-        overflow-hidden z-50 sm:sticky sm:top-0 sm:h-[calc(100vh-4rem)]
+        ${isOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
+        overflow-hidden z-50 md:sticky md:top-0 md:h-[calc(100vh-4rem)]
+        border-l border-neutral-200
       `}
     >
       <div className="h-full overflow-y-auto">
@@ -88,7 +89,7 @@ export function ReservationSidebar({
             isIconOnly
             variant="light"
             onClick={onClose}
-            className="sm:hidden"
+            className="md:hidden"
           >
             <IoClose className="w-6 h-6" />
           </Button>

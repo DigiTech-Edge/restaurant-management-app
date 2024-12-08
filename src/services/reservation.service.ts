@@ -130,6 +130,8 @@ export async function createReservation(data: CreateReservationRequest) {
       throw new Error("Unauthorized");
     }
 
+    console.log(data);
+
     const response = await axios.post(
       `/main/add-reservation/${session.user.id}`,
       data,

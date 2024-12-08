@@ -26,6 +26,7 @@ import {
 } from "@/services/reservation.service";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { capacityOptions } from "@/lib/constants/index";
 
 interface TableData {
   id: string;
@@ -65,21 +66,6 @@ export default function TableManagement({
   useEffect(() => {
     setTablesData(tables);
   }, [tables]);
-
-  const capacityOptions = [
-    "1",
-    "2",
-    "3",
-    "4",
-    "5",
-    "6",
-    "7",
-    "8",
-    "9",
-    "10",
-    "11",
-    "12",
-  ];
 
   const generateQRValue = (table: TableData) => {
     if (!session?.user?.id) return "";

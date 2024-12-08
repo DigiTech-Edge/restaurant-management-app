@@ -5,16 +5,63 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Select, SelectItem } from "@nextui-org/react";
 import { IoClose } from "react-icons/io5";
+import { useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { CreateReservationRequest } from "@/types/reservation.types";
+
+type FormData = {
+  title: string;
+  fullName: string;
+  phoneNumber: string;
+  numberOfPersons: number;
+  reservationDate: string;
+  reservationTime: string;
+  tableId: string;
+};
+
+type ApiData = {
+  name: string;
+  phone: string;
+  numberOfGuests: number;
+  tableId: string;
+  date: string;
+  time: string;
+};
 
 const reservationSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  firstName: z.string().min(1, "First name is required"),
-  surname: z.string().min(1, "Surname is required"),
-  phoneNumber: z.string().min(1, "Phone number is required"),
-  numberOfPersons: z.string().transform((val) => parseInt(val, 10)),
-  reservationDate: z.string().min(1, "Date is required"),
-  reservationTime: z.string().min(1, "Time is required"),
-  tableNumber: z.string().min(1, "Table number is required"),
+  fullName: z.string().min(1, "Full name is required"),
+  phoneNumber: z
+    .string()
+    .min(10, "Phone number must be 10 digits")
+    .max(10, "Phone number must be 10 digits")
+    .regex(/^\d+$/, "Phone number must only contain digits"),
+  numberOfPersons: z
+    .string()
+    .min(1, "Number of persons is required")
+    .transform((val) => {
+      const num = parseInt(val, 10);
+      if (isNaN(num) || num < 1) {
+        throw new Error("Must be at least 1 person");
+      }
+      return num;
+    }),
+  reservationDate: z
+    .string()
+    .min(1, "Date is required")
+    .transform((val) => {
+      // Ensure date is in YYYY-MM-DD format
+      const date = new Date(val);
+      if (isNaN(date.getTime())) {
+        throw new Error("Invalid date format");
+      }
+      return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
+    }),
+  reservationTime: z
+    .string()
+    .min(1, "Time is required")
+    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, "Time must be in HH:MM format"),
+  tableId: z.string().min(1, "Table is required"),
 });
 
 type ReservationFormData = z.infer<typeof reservationSchema>;
@@ -22,14 +69,19 @@ type ReservationFormData = z.infer<typeof reservationSchema>;
 interface ReservationFormProps {
   isOpen?: boolean;
   onClose?: () => void;
-  initialData?: Partial<ReservationFormData>;
-  onSubmit: (data: ReservationFormData) => void;
+  initialData?: Partial<FormData>;
+  onSubmit: (data: CreateReservationRequest) => void;
   tables: Array<{
     id: string;
     capacity: number;
     number: number;
     isReserved?: boolean;
   }>;
+  selectedReservation?:
+    | {
+        tableId: string;
+      }
+    | undefined;
 }
 
 const titles = [
@@ -45,22 +97,72 @@ export function ReservationForm({
   initialData,
   onSubmit,
   tables,
+  selectedReservation,
 }: ReservationFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
+    setValue,
+    watch,
     reset,
   } = useForm<ReservationFormData>({
     resolver: zodResolver(reservationSchema),
     defaultValues: initialData,
   });
 
-  const isEditing = !!initialData?.tableNumber;
+  const isEditing = !!initialData?.tableId;
 
-  const onSubmitForm = (data: ReservationFormData) => {
-    onSubmit(data);
-    reset();
+  useEffect(() => {
+    if (!isOpen) {
+      // Reset form when closing
+      reset();
+    }
+  }, [isOpen, reset]);
+
+  useEffect(() => {
+    if (selectedReservation?.tableId) {
+      setValue("tableId", selectedReservation.tableId);
+    } else if (initialData?.tableId) {
+      setValue("tableId", initialData.tableId);
+    }
+  }, [selectedReservation, initialData, setValue]);
+
+  const onSubmitForm = async (data: ReservationFormData) => {
+    try {
+      // Find selected table to check capacity
+      const selectedTable = tables.find((t) => t.id === data.tableId);
+      if (!selectedTable) {
+        throw new Error("Selected table not found");
+      }
+
+      if (data.numberOfPersons > selectedTable.capacity) {
+        throw new Error(
+          `Number of guests cannot exceed table capacity (${selectedTable.capacity})`
+        );
+      }
+
+      // Transform form data to API format
+      const apiData: CreateReservationRequest = {
+        name: `${data.title} ${data.fullName}`.trim(),
+        phone: data.phoneNumber,
+        numberOfGuests: data.numberOfPersons,
+        tableId: data.tableId,
+        date: data.reservationDate,
+        time: data.reservationTime,
+      };
+
+      await onSubmit(apiData);
+      handleClose();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save reservation"
+      );
+    }
+  };
+
+  const handleClose = () => {
+    reset(); // Reset form before closing
     onClose?.();
   };
 
@@ -81,22 +183,29 @@ export function ReservationForm({
           <h2 className="text-lg font-semibold">
             {isEditing ? "Edit Reservation" : "New Reservation"}
           </h2>
-          <Button isIconOnly variant="light" onClick={onClose} type="button">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="p-2 hover:bg-gray-100 rounded-full"
+          >
             <IoClose className="w-6 h-6" />
-          </Button>
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           <div className="space-y-4">
-            <h3 className="font-medium">Customer Details</h3>
             <Select
               label="Title"
-              defaultSelectedKeys={
-                initialData?.title ? [initialData.title] : []
-              }
+              placeholder="Select title"
               isInvalid={!!errors.title}
               errorMessage={errors.title?.message}
-              {...register("title")}
+              selectedKeys={
+                watch("title") ? new Set([watch("title")]) : new Set()
+              }
+              onSelectionChange={(keys) => {
+                const selectedKey = Array.from(keys)[0]?.toString() || "";
+                setValue("title", selectedKey);
+              }}
             >
               {titles.map((title) => (
                 <SelectItem key={title.value} value={title.value}>
@@ -104,25 +213,18 @@ export function ReservationForm({
                 </SelectItem>
               ))}
             </Select>
-            <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="First Name"
-                placeholder="Mavis"
-                isInvalid={!!errors.firstName}
-                errorMessage={errors.firstName?.message}
-                {...register("firstName")}
-              />
-              <Input
-                label="Surname"
-                placeholder="Amoah"
-                isInvalid={!!errors.surname}
-                errorMessage={errors.surname?.message}
-                {...register("surname")}
-              />
-            </div>
+
+            <Input
+              label="Full Name"
+              placeholder="Enter full name"
+              isInvalid={!!errors.fullName}
+              errorMessage={errors.fullName?.message}
+              {...register("fullName")}
+            />
+
             <Input
               label="Phone Number"
-              placeholder="+1 (123) 23 4564"
+              placeholder="Enter phone number"
               isInvalid={!!errors.phoneNumber}
               errorMessage={errors.phoneNumber?.message}
               {...register("phoneNumber")}
@@ -155,23 +257,32 @@ export function ReservationForm({
                 {...register("reservationTime")}
               />
             </div>
-            <Select
-              label="Table Number"
-              isInvalid={!!errors.tableNumber}
-              errorMessage={errors.tableNumber?.message}
-              {...register("tableNumber")}
-            >
-              {(tables || [])
-                .filter(
-                  (table) =>
-                    !table.isReserved || table.id === initialData?.tableNumber
-                )
-                .map((table) => (
-                  <SelectItem key={table.id} value={table.id}>
-                    {`T-${table.number} (${table.capacity} capacity)`}
+            <div className="space-y-2">
+              <Select
+                label="Table"
+                placeholder="Select a table"
+                isInvalid={!!errors.tableId}
+                errorMessage={errors.tableId?.message}
+                selectedKeys={
+                  watch("tableId") ? new Set([watch("tableId")]) : new Set()
+                }
+                value={watch("tableId")}
+                onSelectionChange={(keys) => {
+                  const selectedKey = Array.from(keys)[0]?.toString() || "";
+                  setValue("tableId", selectedKey);
+                }}
+              >
+                {tables.map((table) => (
+                  <SelectItem
+                    key={table.id}
+                    value={table.id}
+                    textValue={`Table ${table.number} (Capacity: ${table.capacity})`}
+                  >
+                    Table {table.number} (Capacity: {table.capacity})
                   </SelectItem>
                 ))}
-            </Select>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -179,13 +290,19 @@ export function ReservationForm({
           <Button
             variant="light"
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1"
+            isDisabled={isSubmitting}
           >
             Close
           </Button>
-          <Button color="primary" type="submit" className="flex-1 bg-[#5F0101]">
-            Save
+          <Button
+            type="submit"
+            color="danger"
+            className="flex-1 bg-[#5F0101]"
+            isLoading={isSubmitting}
+          >
+            {isSubmitting ? "Saving..." : "Save"}
           </Button>
         </div>
       </form>

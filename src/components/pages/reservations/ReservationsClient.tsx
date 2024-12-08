@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { FloorPlan } from "./FloorPlan";
 import { ReservationHeader } from "./ReservationHeader";
@@ -10,6 +10,7 @@ import {
   createReservation,
   updateReservation,
 } from "@/services/reservation.service";
+import { CreateReservationRequest } from "@/types/reservation.types";
 
 interface TableData {
   id: string;
@@ -33,8 +34,14 @@ export default function ReservationsClient({
 }: ReservationsClientProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedReservation, setSelectedReservation] =
-    useState<Partial<Reservation> | null>(null);
+  const [selectedReservation, setSelectedReservation] = useState<{
+    tableId: string;
+  } | null>(null);
+  const [selectedTable, setSelectedTable] = useState<{ id: string } | null>(
+    null
+  );
+
+  console.log(reservations);
 
   const handleTableClick = (tableId: string) => {
     const table = tables.find((t) => t.id === tableId);
@@ -65,37 +72,32 @@ export default function ReservationsClient({
     setIsFormOpen(true);
   };
 
-  const handleSubmitReservation = async (formData: any) => {
+  const handleSubmitReservation = async (
+    formData: CreateReservationRequest
+  ) => {
     try {
-      const reservationData = {
-        name: `${formData.firstName} ${formData.surname}`,
-        phone: formData.phoneNumber,
-        numberOfGuests: formData.numberOfPersons,
-        tableId: formData.tableNumber,
-        date: formData.reservationDate,
-        time: formData.reservationTime,
-      };
-
       if (selectedReservation?.tableId) {
-        // Update existing reservation
         await updateReservation(selectedReservation.tableId, {
           status: "confirmed",
         });
-        toast.success("Reservation updated successfully");
       } else {
-        // Create new reservation
-        await createReservation(reservationData);
-        toast.success("Reservation created successfully");
+        await createReservation(formData);
       }
 
       setIsFormOpen(false);
-      // Refresh the page to get updated data
-      window.location.reload();
+      setSelectedReservation(null);
+      toast.success("Reservation saved successfully");
     } catch (error) {
-      console.error("Error saving reservation:", error);
-      toast.error("Failed to save reservation");
+      throw error; // Let the form handle the error display
     }
   };
+
+  useEffect(() => {
+    if (!isFormOpen) {
+      setSelectedReservation(null);
+      setSelectedTable(null);
+    }
+  }, [isFormOpen]);
 
   return (
     <div className="h-full flex flex-col">
@@ -119,8 +121,16 @@ export default function ReservationsClient({
         />
         <ReservationForm
           isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          initialData={selectedReservation!}
+          onClose={() => {
+            setIsFormOpen(false);
+            setSelectedReservation(null);
+          }}
+          initialData={
+            selectedReservation
+              ? { tableId: selectedReservation.tableId }
+              : undefined
+          }
+          selectedReservation={selectedReservation || undefined}
           tables={tables}
           onSubmit={handleSubmitReservation}
         />

@@ -25,29 +25,28 @@ export function ReservationHeader({
 
   return (
     <>
-      <div className="flex flex-col-reverse sm:flex-row items-center justify-between p-4 border-b gap-4">
-        <div className="flex-1 w-full sm:w-auto overflow-x-auto">
-          <div className="flex justify-end">
-            <Button
-              variant="solid"
-              size="md"
-              className="bg-[#5F0101] text-white"
-              startContent={<FaPlus />}
-              onClick={() => setIsTableManagementOpen(true)}
-            >
-              Manage Tables
-            </Button>
-          </div>
+      <div className="flex flex-col-reverse md:flex-row items-center justify-between p-4 border-b gap-4">
+        <div className="flex justify-between w-full">
+          <div className="max-md:hidden" />
+          <Button
+            variant="solid"
+            size="md"
+            className="bg-[#5F0101] text-white"
+            startContent={<FaPlus />}
+            onClick={() => setIsTableManagementOpen(true)}
+          >
+            Manage Tables
+          </Button>
+          <Button
+            isIconOnly
+            variant="light"
+            aria-label="Menu"
+            className="md:hidden"
+            onClick={onMenuClick}
+          >
+            <HiMenu className="text-2xl" />
+          </Button>
         </div>
-        <Button
-          isIconOnly
-          variant="light"
-          aria-label="Menu"
-          className="sm:hidden"
-          onClick={onMenuClick}
-        >
-          <HiMenu className="text-2xl" />
-        </Button>
       </div>
 
       {isTableManagementOpen && (

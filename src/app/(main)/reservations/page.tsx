@@ -10,6 +10,9 @@ export default async function ReservationsPage() {
     getReservations(),
   ]);
 
+  console.log(tablesResponse);
+  console.log(reservationsResponse);
+
   const tables = (tablesResponse.tables || []).map((table) => ({
     id: table.id,
     capacity: table.capacity,
