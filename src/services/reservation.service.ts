@@ -151,7 +151,7 @@ export async function createReservation(data: CreateReservationRequest) {
 
 export async function updateReservation(
   reservationId: string,
-  data: UpdateReservationRequest
+  data: CreateReservationRequest
 ) {
   try {
     const session = await auth();
@@ -159,15 +159,11 @@ export async function updateReservation(
       throw new Error("Unauthorized");
     }
 
-    const response = await axios.put(
-      `/main/update-reservation/${reservationId}`,
-      data,
-      {
-        headers: {
-          Authorization: `${session.user.accessToken}`,
-        },
-      }
-    );
+    const response = await axios.put(`/main/update-reservation/${reservationId}`, data, {
+      headers: {
+        Authorization: `${session.user.accessToken}`,
+      },
+    });
 
     revalidatePath("/reservations");
     return response.data as ReservationsApiResponse;

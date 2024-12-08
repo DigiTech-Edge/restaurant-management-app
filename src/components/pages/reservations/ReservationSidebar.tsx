@@ -6,40 +6,51 @@ import { IoCalendarOutline, IoClose } from "react-icons/io5";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-export interface Reservation {
+export interface FormattedReservation {
+  id: string;
   customerName: string;
   firstName: string;
   surname: string;
   title: string;
   phoneNumber: string;
   time: string;
+  date: string;
   tableId: string;
   persons: number;
 }
 
 interface ReservationSidebarProps {
   date: Date;
+  onDateChange: (date: Date) => void;
   isOpen?: boolean;
   onClose?: () => void;
   reservations: {
-    morning: Reservation[];
-    afternoon: Reservation[];
-    evening: Reservation[];
+    morning: FormattedReservation[];
+    afternoon: FormattedReservation[];
+    evening: FormattedReservation[];
   };
-  onEditReservation: (reservation: Reservation) => void;
+  onEditReservation: (reservation: FormattedReservation) => void;
   onAddReservation: () => void;
+  tables: Array<{
+    id: string;
+    capacity: number;
+    number: number;
+    isReserved?: boolean;
+  }>;
 }
 
 export function ReservationSidebar({
   date,
+  onDateChange,
   isOpen,
   onClose,
   reservations,
   onEditReservation,
   onAddReservation,
+  tables,
 }: ReservationSidebarProps) {
   const renderReservationList = (
-    reservations: Reservation[],
+    reservations: FormattedReservation[],
     title: string
   ) => {
     if (!reservations.length) return null;
@@ -58,7 +69,11 @@ export function ReservationSidebar({
                 <div>
                   <p className="font-medium">{reservation.customerName}</p>
                   <p className="text-sm text-gray-500">
-                    {reservation.persons} persons • Table {reservation.tableId}
+                    {reservation.persons} persons • Table{" "}
+                    {
+                      tables.find((table) => table.id === reservation.tableId)
+                        ?.number
+                    }
                   </p>
                 </div>
                 <span className="text-sm text-gray-500">
@@ -102,9 +117,13 @@ export function ReservationSidebar({
               fairly and receive them with warmth.
             </p>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-gray-500 border border-[#5F0101] bg-[#5F010114] rounded-md px-2 py-1">
-                <BsCalendar3 className="w-4 h-4" />
-                <span>{format(date, "EEE, MMM dd")}</span>
+              <div className="flex items-center justify-between mb-4">
+                <input
+                  type="date"
+                  value={format(date, "yyyy-MM-dd")}
+                  onChange={(e) => onDateChange(new Date(e.target.value))}
+                  className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5F0101]"
+                />
               </div>
               <Button
                 size="sm"
@@ -115,10 +134,6 @@ export function ReservationSidebar({
               </Button>
             </div>
           </div>
-
-          <p className="text-sm text-gray-500">
-            Motive of the reservation will be displayed here.
-          </p>
 
           {!reservations ||
           !(

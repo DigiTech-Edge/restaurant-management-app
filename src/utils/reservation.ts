@@ -4,12 +4,14 @@ import { format, parse } from "date-fns";
 type TimeSlot = "morning" | "afternoon" | "evening";
 
 interface FormattedReservation {
+  id: string;
   customerName: string;
   firstName: string;
   surname: string;
   title: string;
   phoneNumber: string;
   time: string;
+  date: string;
   tableId: string;
   persons: number;
 }
@@ -30,17 +32,19 @@ export function formatReservationsByTimeSlot(
   };
 
   reservations.forEach((reservation) => {
-    const time = parse(reservation.time, "HH:mm", new Date());
-    const formattedTime = format(time, "h:mma").toLowerCase();
-    const hour = time.getHours();
+    const dateTime = new Date(reservation.date);
+    const hour = dateTime.getHours();
+    const formattedTime = format(dateTime, "h:mma").toLowerCase();
 
     const formattedReservation: FormattedReservation = {
+      id: reservation.id,
       customerName: `${reservation.name}`,
       firstName: reservation.name.split(" ")[0] || "",
       surname: reservation.name.split(" ").slice(1).join(" ") || "",
-      title: "Mr", // Default title since it's not in the API
+      title: reservation.name.split(" ")[0] || "Mr", // Extract title from name or use default
       phoneNumber: reservation.phone,
       time: formattedTime,
+      date: format(dateTime, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"),
       tableId: reservation.tableId,
       persons: reservation.numberOfGuests,
     };

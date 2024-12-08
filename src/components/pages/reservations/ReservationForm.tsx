@@ -1,31 +1,23 @@
 "use client";
 
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Select, SelectItem } from "@nextui-org/react";
 import { IoClose } from "react-icons/io5";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { CreateReservationRequest } from "@/types/reservation.types";
+import { FormattedReservation } from "./ReservationSidebar";
 
 type FormData = {
   title: string;
   fullName: string;
   phoneNumber: string;
-  numberOfPersons: number;
+  numberOfPersons: string;
   reservationDate: string;
   reservationTime: string;
   tableId: string;
-};
-
-type ApiData = {
-  name: string;
-  phone: string;
-  numberOfGuests: number;
-  tableId: string;
-  date: string;
-  time: string;
 };
 
 const reservationSchema = z.object({
@@ -46,17 +38,7 @@ const reservationSchema = z.object({
       }
       return num;
     }),
-  reservationDate: z
-    .string()
-    .min(1, "Date is required")
-    .transform((val) => {
-      // Ensure date is in YYYY-MM-DD format
-      const date = new Date(val);
-      if (isNaN(date.getTime())) {
-        throw new Error("Invalid date format");
-      }
-      return date.toISOString().split("T")[0]; // Returns YYYY-MM-DD
-    }),
+  reservationDate: z.string().min(1, "Date is required"),
   reservationTime: z
     .string()
     .min(1, "Time is required")
@@ -69,7 +51,6 @@ type ReservationFormData = z.infer<typeof reservationSchema>;
 interface ReservationFormProps {
   isOpen?: boolean;
   onClose?: () => void;
-  initialData?: Partial<FormData>;
   onSubmit: (data: CreateReservationRequest) => void;
   tables: Array<{
     id: string;
@@ -77,11 +58,7 @@ interface ReservationFormProps {
     number: number;
     isReserved?: boolean;
   }>;
-  selectedReservation?:
-    | {
-        tableId: string;
-      }
-    | undefined;
+  selectedReservation?: FormattedReservation | { tableId: string } | null;
 }
 
 const titles = [
@@ -94,75 +71,102 @@ const titles = [
 export function ReservationForm({
   isOpen,
   onClose,
-  initialData,
   onSubmit,
   tables,
   selectedReservation,
 }: ReservationFormProps) {
+  const getInitialValues = useCallback(() => {
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
+      now.getMinutes()
+    ).padStart(2, "0")}`;
+
+    if (selectedReservation && "id" in selectedReservation) {
+      const [title, ...nameParts] = selectedReservation.customerName.split(" ");
+      const fullName = nameParts.join(" ");
+
+      // Parse the time from the selected reservation
+      const timeMatch = selectedReservation.time.match(/(\d{1,2}):(\d{2})/);
+      let formattedTime = currentTime;
+
+      if (timeMatch) {
+        const [_, hours, minutes] = timeMatch;
+        formattedTime = `${hours.padStart(2, "0")}:${minutes}`;
+      }
+
+      return {
+        title,
+        fullName,
+        phoneNumber: selectedReservation.phoneNumber,
+        numberOfPersons: selectedReservation.persons.toString(),
+        reservationDate: new Date(selectedReservation.date)
+          .toISOString()
+          .split("T")[0],
+        reservationTime: formattedTime,
+        tableId: selectedReservation.tableId,
+      };
+    }
+
+    if (selectedReservation && "tableId" in selectedReservation) {
+      return {
+        title: "",
+        fullName: "",
+        phoneNumber: "",
+        numberOfPersons: "1",
+        reservationDate: now.toISOString().split("T")[0],
+        reservationTime: currentTime,
+        tableId: selectedReservation.tableId,
+      };
+    }
+
+    return {
+      title: "",
+      fullName: "",
+      phoneNumber: "",
+      numberOfPersons: "1",
+      reservationDate: now.toISOString().split("T")[0],
+      reservationTime: currentTime,
+      tableId: "",
+    };
+  }, [selectedReservation]);
+
   const {
-    register,
+    control,
     handleSubmit,
-    formState: { errors, isSubmitting },
-    setValue,
-    watch,
+    formState: { errors },
     reset,
-  } = useForm<ReservationFormData>({
+  } = useForm<FormData>({
     resolver: zodResolver(reservationSchema),
-    defaultValues: initialData,
+    defaultValues: getInitialValues(),
   });
 
-  const isEditing = !!initialData?.tableId;
+  console.log(getInitialValues());
 
+  // Single useEffect to handle form state
   useEffect(() => {
-    if (!isOpen) {
-      // Reset form when closing
-      reset();
-    }
-  }, [isOpen, reset]);
+    const values = getInitialValues();
+    reset(values);
+  }, [isOpen, selectedReservation, reset, getInitialValues]);
 
-  useEffect(() => {
-    if (selectedReservation?.tableId) {
-      setValue("tableId", selectedReservation.tableId);
-    } else if (initialData?.tableId) {
-      setValue("tableId", initialData.tableId);
-    }
-  }, [selectedReservation, initialData, setValue]);
-
-  const onSubmitForm = async (data: ReservationFormData) => {
+  const onSubmitForm = async (data: FormData) => {
     try {
-      // Find selected table to check capacity
-      const selectedTable = tables.find((t) => t.id === data.tableId);
-      if (!selectedTable) {
-        throw new Error("Selected table not found");
-      }
-
-      if (data.numberOfPersons > selectedTable.capacity) {
-        throw new Error(
-          `Number of guests cannot exceed table capacity (${selectedTable.capacity})`
-        );
-      }
-
-      // Transform form data to API format
       const apiData: CreateReservationRequest = {
         name: `${data.title} ${data.fullName}`.trim(),
         phone: data.phoneNumber,
-        numberOfGuests: data.numberOfPersons,
+        numberOfGuests: parseInt(data.numberOfPersons, 10),
         tableId: data.tableId,
         date: data.reservationDate,
         time: data.reservationTime,
       };
 
       await onSubmit(apiData);
-      handleClose();
+      onClose?.();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save reservation"
-      );
+      toast.error("Failed to save reservation");
     }
   };
 
   const handleClose = () => {
-    reset(); // Reset form before closing
     onClose?.();
   };
 
@@ -181,7 +185,7 @@ export function ReservationForm({
       >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">
-            {isEditing ? "Edit Reservation" : "New Reservation"}
+            {selectedReservation ? "Edit Reservation" : "New Reservation"}
           </h2>
           <button
             type="button"
@@ -194,94 +198,125 @@ export function ReservationForm({
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           <div className="space-y-4">
-            <Select
-              label="Title"
-              placeholder="Select title"
-              isInvalid={!!errors.title}
-              errorMessage={errors.title?.message}
-              selectedKeys={
-                watch("title") ? new Set([watch("title")]) : new Set()
-              }
-              onSelectionChange={(keys) => {
-                const selectedKey = Array.from(keys)[0]?.toString() || "";
-                setValue("title", selectedKey);
-              }}
-            >
-              {titles.map((title) => (
-                <SelectItem key={title.value} value={title.value}>
-                  {title.label}
-                </SelectItem>
-              ))}
-            </Select>
-
-            <Input
-              label="Full Name"
-              placeholder="Enter full name"
-              isInvalid={!!errors.fullName}
-              errorMessage={errors.fullName?.message}
-              {...register("fullName")}
+            <h3 className="font-medium">Customer Information</h3>
+            <Controller
+              name="title"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  label="Title"
+                  isInvalid={!!errors.title}
+                  errorMessage={errors.title?.message}
+                  selectedKeys={
+                    field.value ? new Set([field.value]) : new Set()
+                  }
+                  onChange={(e) => field.onChange(e.target.value)}
+                >
+                  {titles.map((title) => (
+                    <SelectItem key={title.value} value={title.value}>
+                      {title.label}
+                    </SelectItem>
+                  ))}
+                </Select>
+              )}
             />
-
-            <Input
-              label="Phone Number"
-              placeholder="Enter phone number"
-              isInvalid={!!errors.phoneNumber}
-              errorMessage={errors.phoneNumber?.message}
-              {...register("phoneNumber")}
+            <Controller
+              name="fullName"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Full Name"
+                  isInvalid={!!errors.fullName}
+                  errorMessage={errors.fullName?.message}
+                />
+              )}
+            />
+            <Controller
+              name="phoneNumber"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  label="Phone Number"
+                  isInvalid={!!errors.phoneNumber}
+                  errorMessage={errors.phoneNumber?.message}
+                />
+              )}
             />
           </div>
-
           <div className="space-y-4">
             <h3 className="font-medium">Reservation Details</h3>
-            <Input
-              label="Number of Persons"
-              type="number"
-              min="1"
-              isInvalid={!!errors.numberOfPersons}
-              errorMessage={errors.numberOfPersons?.message}
-              {...register("numberOfPersons")}
+            <Controller
+              name="numberOfPersons"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="number"
+                  min="1"
+                  label="Number of Persons"
+                  isInvalid={!!errors.numberOfPersons}
+                  errorMessage={errors.numberOfPersons?.message}
+                />
+              )}
             />
             <div className="grid grid-cols-2 gap-4">
-              <Input
-                label="Date"
-                type="date"
-                isInvalid={!!errors.reservationDate}
-                errorMessage={errors.reservationDate?.message}
-                {...register("reservationDate")}
+              <Controller
+                name="reservationDate"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    type="date"
+                    label="Date"
+                    isInvalid={!!errors.reservationDate}
+                    errorMessage={errors.reservationDate?.message}
+                  />
+                )}
               />
-              <Input
-                label="Time"
-                type="time"
-                isInvalid={!!errors.reservationTime}
-                errorMessage={errors.reservationTime?.message}
-                {...register("reservationTime")}
+              <Controller
+                name="reservationTime"
+                control={control}
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    type="time"
+                    label="Time"
+                    isInvalid={!!errors.reservationTime}
+                    errorMessage={errors.reservationTime?.message}
+                  />
+                )}
               />
             </div>
             <div className="space-y-2">
-              <Select
-                label="Table"
-                placeholder="Select a table"
-                isInvalid={!!errors.tableId}
-                errorMessage={errors.tableId?.message}
-                selectedKeys={
-                  watch("tableId") ? new Set([watch("tableId")]) : new Set()
-                }
-                value={watch("tableId")}
-                onSelectionChange={(keys) => {
-                  const selectedKey = Array.from(keys)[0]?.toString() || "";
-                  setValue("tableId", selectedKey);
-                }}
-              >
-                {tables.map((table) => (
-                  <SelectItem
-                    key={table.id}
-                    value={table.id}
-                    textValue={`Table ${table.number} (Capacity: ${table.capacity})`}
+              <Controller
+                name="tableId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label="Table"
+                    isInvalid={!!errors.tableId}
+                    errorMessage={errors.tableId?.message}
+                    selectedKeys={
+                      field.value ? new Set([field.value]) : new Set()
+                    }
+                    onChange={(e) => field.onChange(e.target.value)}
                   >
-                    Table {table.number} (Capacity: {table.capacity})
-                  </SelectItem>
-                ))}
-              </Select>
+                    {tables.map((table) => (
+                      <SelectItem
+                        key={table.id}
+                        value={table.id}
+                        textValue={`Table ${table.number} (${table.capacity} persons)`}
+                      >
+                        Table {table.number} ({table.capacity} persons)
+                      </SelectItem>
+                    ))}
+                  </Select>
+                )}
+              />
             </div>
           </div>
         </div>
@@ -292,17 +327,11 @@ export function ReservationForm({
             type="button"
             onClick={handleClose}
             className="flex-1"
-            isDisabled={isSubmitting}
           >
             Close
           </Button>
-          <Button
-            type="submit"
-            color="danger"
-            className="flex-1 bg-[#5F0101]"
-            isLoading={isSubmitting}
-          >
-            {isSubmitting ? "Saving..." : "Save"}
+          <Button type="submit" color="danger" className="flex-1 bg-[#5F0101]">
+            Save
           </Button>
         </div>
       </form>

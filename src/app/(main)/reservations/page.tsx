@@ -10,35 +10,18 @@ export default async function ReservationsPage() {
     getReservations(),
   ]);
 
-  console.log(tablesResponse);
-  console.log(reservationsResponse);
-
   const tables = (tablesResponse.tables || []).map((table) => ({
     id: table.id,
     capacity: table.capacity,
-    isReserved: false,
+    isReserved: table.reservations && table.reservations.length > 0,
     number: table.number,
   }));
 
-  // Process reservations and mark tables as reserved
+  // Process all reservations
   const reservations = reservationsResponse.reservations || [];
-  const currentDate = new Date();
-  const todaysReservations = reservations.filter((res) => {
-    const resDate = new Date(res.date);
-    return resDate.toDateString() === currentDate.toDateString();
-  });
 
-  // Mark tables as reserved if they have a reservation today
-  todaysReservations.forEach((res) => {
-    const table = tables.find((t) => t.id === res.tableId);
-    if (table) {
-      table.isReserved = true;
-    }
-  });
-
-  // Format reservations into morning, afternoon, evening slots
-  const formattedReservations =
-    formatReservationsByTimeSlot(todaysReservations);
+  // Format all reservations into morning, afternoon, evening slots
+  const formattedReservations = formatReservationsByTimeSlot(reservations);
 
   return (
     <div>

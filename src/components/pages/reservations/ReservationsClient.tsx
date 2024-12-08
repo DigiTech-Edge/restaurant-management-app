@@ -4,13 +4,17 @@ import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { FloorPlan } from "./FloorPlan";
 import { ReservationHeader } from "./ReservationHeader";
-import { ReservationSidebar, type Reservation } from "./ReservationSidebar";
+import {
+  ReservationSidebar,
+  type FormattedReservation,
+} from "./ReservationSidebar";
 import { ReservationForm } from "./ReservationForm";
 import {
   createReservation,
   updateReservation,
 } from "@/services/reservation.service";
 import { CreateReservationRequest } from "@/types/reservation.types";
+import { useReservationStore } from "@/store/useReservationStore";
 
 interface TableData {
   id: string;
@@ -22,9 +26,9 @@ interface TableData {
 interface ReservationsClientProps {
   tables: TableData[];
   reservations: {
-    morning: Reservation[];
-    afternoon: Reservation[];
-    evening: Reservation[];
+    morning: FormattedReservation[];
+    afternoon: FormattedReservation[];
+    evening: FormattedReservation[];
   };
 }
 
@@ -34,35 +38,67 @@ export default function ReservationsClient({
 }: ReservationsClientProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedReservation, setSelectedReservation] = useState<{
-    tableId: string;
-  } | null>(null);
-  const [selectedTable, setSelectedTable] = useState<{ id: string } | null>(
-    null
+  const {
+    selectedDate,
+    selectedReservation,
+    setSelectedDate,
+    setSelectedReservation,
+  } = useReservationStore();
+
+  // Initialize filtered reservations with current date's reservations
+  const getFilteredReservations = (date: Date) => ({
+    morning: reservations.morning.filter((res) => {
+      const resDate = new Date(res.date);
+      return resDate.toDateString() === date.toDateString();
+    }),
+    afternoon: reservations.afternoon.filter((res) => {
+      const resDate = new Date(res.date);
+      return resDate.toDateString() === date.toDateString();
+    }),
+    evening: reservations.evening.filter((res) => {
+      const resDate = new Date(res.date);
+      return resDate.toDateString() === date.toDateString();
+    }),
+  });
+
+  const [filteredReservations, setFilteredReservations] = useState(
+    getFilteredReservations(selectedDate)
   );
 
-  console.log(reservations);
+  // Filter reservations based on selected date
+  useEffect(() => {
+    setFilteredReservations(getFilteredReservations(selectedDate));
+  }, [selectedDate, reservations]);
+
+  // Get all reservations for the selected date
+  const allCurrentReservations = [
+    ...filteredReservations.morning,
+    ...filteredReservations.afternoon,
+    ...filteredReservations.evening,
+  ];
+
+  // Check if a table is reserved for the selected date
+  const isTableReserved = (tableId: string) => {
+    return allCurrentReservations.some((res) => res.tableId === tableId);
+  };
+
+  // Get reservation for a table on the selected date
+  const getTableReservation = (tableId: string) => {
+    return allCurrentReservations.find((res) => res.tableId === tableId);
+  };
 
   const handleTableClick = (tableId: string) => {
-    const table = tables.find((t) => t.id === tableId);
-    if (table?.isReserved) {
-      const allReservations = [
-        ...reservations.morning,
-        ...reservations.afternoon,
-        ...reservations.evening,
-      ];
-      const reservation = allReservations.find((r) => r.tableId === tableId);
-      if (reservation) {
-        setSelectedReservation(reservation);
-        setIsFormOpen(true);
-      }
+    const reservation = getTableReservation(tableId);
+    if (reservation) {
+      setSelectedReservation(reservation);
+      setIsFormOpen(true);
     } else {
       setSelectedReservation({ tableId });
       setIsFormOpen(true);
     }
   };
 
-  const handleEditReservation = (reservation: Reservation) => {
+  const handleEditReservation = (reservation: FormattedReservation) => {
     setSelectedReservation(reservation);
     setIsFormOpen(true);
   };
@@ -76,10 +112,8 @@ export default function ReservationsClient({
     formData: CreateReservationRequest
   ) => {
     try {
-      if (selectedReservation?.tableId) {
-        await updateReservation(selectedReservation.tableId, {
-          status: "confirmed",
-        });
+      if (selectedReservation && "id" in selectedReservation) {
+        await updateReservation(selectedReservation.id, formData);
       } else {
         await createReservation(formData);
       }
@@ -88,16 +122,15 @@ export default function ReservationsClient({
       setSelectedReservation(null);
       toast.success("Reservation saved successfully");
     } catch (error) {
-      throw error; // Let the form handle the error display
+      throw error;
     }
   };
 
   useEffect(() => {
     if (!isFormOpen) {
       setSelectedReservation(null);
-      setSelectedTable(null);
     }
-  }, [isFormOpen]);
+  }, [isFormOpen, setSelectedReservation]);
 
   return (
     <div className="h-full flex flex-col">
@@ -105,34 +138,38 @@ export default function ReservationsClient({
         <div className="flex-1 flex flex-col h-[calc(100vh-8rem)] overflow-auto">
           <ReservationHeader
             onMenuClick={() => setIsSidebarOpen(true)}
-            tables={tables}
+            tables={tables.map((table) => ({
+              ...table,
+              isReserved: isTableReserved(table.id),
+            }))}
           />
           <div className="flex-1 p-4">
-            <FloorPlan tables={tables} onTableClick={handleTableClick} />
+            <FloorPlan
+              tables={tables.map((table) => ({
+                ...table,
+                isReserved: isTableReserved(table.id),
+              }))}
+              onTableClick={handleTableClick}
+            />
           </div>
         </div>
         <ReservationSidebar
-          date={new Date()}
+          date={selectedDate}
+          onDateChange={setSelectedDate}
           isOpen={isSidebarOpen}
           onClose={() => setIsSidebarOpen(false)}
-          reservations={reservations}
+          reservations={filteredReservations}
           onEditReservation={handleEditReservation}
           onAddReservation={handleAddReservation}
+          tables={tables}
         />
+
         <ReservationForm
           isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false);
-            setSelectedReservation(null);
-          }}
-          initialData={
-            selectedReservation
-              ? { tableId: selectedReservation.tableId }
-              : undefined
-          }
-          selectedReservation={selectedReservation || undefined}
-          tables={tables}
+          onClose={() => setIsFormOpen(false)}
           onSubmit={handleSubmitReservation}
+          tables={tables}
+          selectedReservation={selectedReservation}
         />
       </div>
     </div>
