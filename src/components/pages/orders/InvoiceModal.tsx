@@ -3,6 +3,7 @@
 import React from "react";
 import { Modal, ModalContent, ModalBody } from "@nextui-org/react";
 import dynamic from "next/dynamic";
+import { InvoiceModalProps } from "@/types/order.types";
 
 const InvoicePDF = dynamic(() => import("../../pdf/InvoicePDF"), {
   ssr: false,
@@ -12,25 +13,6 @@ const InvoicePDF = dynamic(() => import("../../pdf/InvoicePDF"), {
     </div>
   ),
 });
-
-interface OrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-  ingredients: string;
-}
-
-interface InvoiceModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  orders: OrderItem[];
-  orderTime: string;
-  tableNumber: string;
-  orderNumber: string;
-  paymentMethod: string;
-  orderType: string;
-  isCompleted?: boolean;
-}
 
 const InvoiceModal: React.FC<InvoiceModalProps> = ({
   isOpen,

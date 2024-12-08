@@ -7,6 +7,7 @@ import {
   ModalContent,
   ModalBody,
   useDisclosure,
+  Chip,
 } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import { FaPrint } from "react-icons/fa";
@@ -17,7 +18,7 @@ interface OrderItem {
   name: string;
   quantity: number;
   price: number;
-  ingredients: string;
+  description: string;
 }
 
 interface CompletedCardProps {
@@ -28,6 +29,7 @@ interface CompletedCardProps {
   paymentMethod: string;
   orderType: string;
   delay: number;
+  isPaid: boolean;
 }
 
 const CompletedCard: React.FC<CompletedCardProps> = ({
@@ -38,6 +40,7 @@ const CompletedCard: React.FC<CompletedCardProps> = ({
   paymentMethod,
   orderType,
   delay,
+  isPaid,
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isInvoiceOpen, setIsInvoiceOpen] = React.useState(false);
@@ -50,79 +53,69 @@ const CompletedCard: React.FC<CompletedCardProps> = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay }}
       >
-        <div className="overflow-x-auto">
-          <div className="inline-flex gap-4 text-sm min-w-full">
-            <div className="flex flex-col w-[20%] min-w-[150px]">
-              <span className="font-semibold">Order Number</span>
-              <span>{orderNumber}</span>
+        <div className="flex justify-between items-center mb-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FaPrint className="text-[#5F0101]" />
+              <span className="font-semibold">Order #{orderNumber}</span>
             </div>
-            <div className="flex flex-col w-[15%] min-w-[100px]">
-              <span className="font-semibold">Order Time</span>
-              <span>{orderTime}</span>
-            </div>
-            <div className="flex flex-col w-[15%] min-w-[100px]">
-              <span className="font-semibold">Table Number</span>
-              <span>{tableNumber}</span>
-            </div>
-            <div className="flex flex-col w-[15%] min-w-[120px]">
-              <span className="font-semibold">Payment Method</span>
-              <span>{paymentMethod}</span>
-            </div>
-            <div className="flex flex-col w-[15%] min-w-[100px]">
-              <span className="font-semibold">Type</span>
-              <span>{orderType}</span>
-            </div>
-            <div className="flex flex-col w-[10%] min-w-[80px]">
-              <span className="font-semibold">Status</span>
-              <span className="text-green-500">Completed</span>
-            </div>
-            <div className="flex flex-col gap-2 w-[10%] min-w-[80px]">
-              <Button
-                onClick={onOpen}
-                size="sm"
-                color="primary"
-                className="w-full"
-              >
-                View
-              </Button>
-              <Button
-                onClick={() => setIsInvoiceOpen(true)}
-                size="sm"
-                className="w-full bg-[#5F0101] text-white"
-                startContent={<FaPrint />}
-              >
-                Print
-              </Button>
+            <div className="flex items-center gap-4">
+              <span className="text-sm">Time: {orderTime}</span>
+              <span className="text-sm">Table: {tableNumber}</span>
+              <span className="text-sm">{orderType}</span>
             </div>
           </div>
+          <Chip
+            className="capitalize"
+            color={isPaid ? "success" : "danger"}
+            size="sm"
+            variant="flat"
+          >
+            {isPaid ? "Paid" : "Not Paid"}
+          </Chip>
+        </div>
+        <div className="space-y-2">
+          {orders.map((item, index) => (
+            <div
+              key={index}
+              className="flex justify-between items-start border-b border-gray-200 pb-2"
+            >
+              <div>
+                <span className="font-bold">{item.name}</span> ({item.quantity})
+                <br />
+                <span className="text-sm text-gray-600">
+                  {item.description}
+                </span>
+              </div>
+              <span className="font-semibold flex-shrink-0">
+                Ghc {item.price.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between items-center mt-4">
+          <div className="text-sm">
+            <span className="font-semibold">Payment Method:</span>{" "}
+            {paymentMethod}
+          </div>
+          <Button
+            size="sm"
+            radius="sm"
+            className="w-[150px] text-white"
+            style={{ backgroundColor: "#5F0101" }}
+            onPress={() => setIsInvoiceOpen(true)}
+          >
+            Print
+          </Button>
         </div>
       </motion.div>
-
-      <Modal isOpen={isOpen} onClose={onClose} size="sm">
-        <ModalContent>
-          <ModalBody>
-            <OrderCard
-              orders={orders}
-              orderTime={orderTime}
-              tableNumber={tableNumber}
-              orderNumber={orderNumber}
-              paymentMethod={paymentMethod}
-              orderType={orderType}
-              statusButtons={[]}
-              backgroundColor="#fff"
-              delay={0}
-            />
-          </ModalBody>
-        </ModalContent>
-      </Modal>
-
       <InvoiceModal
         isOpen={isInvoiceOpen}
         onClose={() => setIsInvoiceOpen(false)}
         orders={orders}
+        orderNumber={orderNumber}
         orderTime={orderTime}
         tableNumber={tableNumber}
-        orderNumber={orderNumber}
         paymentMethod={paymentMethod}
         orderType={orderType}
         isCompleted={true}

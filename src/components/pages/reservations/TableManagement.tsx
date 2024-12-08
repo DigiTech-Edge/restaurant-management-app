@@ -139,10 +139,10 @@ export default function TableManagement({
 
   const generateQRValue = (table: TableData) => {
     if (!session?.user?.id) return "";
-    const baseUrl = "https://my-restaurant-347.web.app/menu";
+    const baseUrl = "https://digitechedge.web.app/menu";
     const params = new URLSearchParams({
-      tableNumber: table.number.toString(),
-      restaurantId: session.user.id,
+      ti: table.id,
+      ri: session.user.id,
     });
     return `${baseUrl}?${params.toString()}`;
   };

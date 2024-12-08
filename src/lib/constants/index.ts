@@ -21,3 +21,10 @@ export const capacityOptions = [
   "11",
   "12",
 ];
+
+export const ORDER_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  PAID: 'paid'
+} as const;

@@ -11,11 +11,14 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import InvoiceModal from "./InvoiceModal";
+import { updateOrderStatus } from "@/services/order.service";
+import { ORDER_STATUS } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 interface OrderItem {
   name: string;
   quantity: number;
-  ingredients: string;
+  description: string;
   price: number;
 }
 
@@ -26,7 +29,7 @@ interface OrderCardProps {
   orderNumber: string;
   paymentMethod: string;
   orderType: string;
-  statusButtons: { name: string; color: string }[];
+  status: string;
   backgroundColor: string;
   delay: number;
 }
@@ -38,23 +41,48 @@ const OrderCard: React.FC<OrderCardProps> = ({
   orderNumber,
   paymentMethod,
   orderType,
-  statusButtons,
+  status,
   backgroundColor = "#fff",
   delay = 0,
 }) => {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const total = orders?.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  ) || 0;
+  const total =
+    orders?.reduce((sum, item) => sum + item.price * item.quantity, 0) || 0;
 
-  const handleButtonClick = (buttonName: string) => {
-    if (buttonName.toLowerCase() === "print") {
-      setIsInvoiceOpen(true);
+  const handleStatusUpdate = async () => {
+    setIsProcessing(true);
+    try {
+      const newStatus =
+        status.toLowerCase() === "pending"
+          ? ORDER_STATUS.PROCESSING
+          : ORDER_STATUS.COMPLETED;
+
+      await updateOrderStatus(orderNumber, newStatus);
+
+      toast.success("Status updated successfully");
+    } catch (error) {
+      toast.error("Failed to update status");
+      console.error("Failed to update status:", error);
+    } finally {
+      setIsProcessing(false);
     }
-    // Handle other button clicks here
   };
+
+  const statusButtons = [
+    {
+      name: status.toLowerCase() === "pending" ? "Process" : "Complete",
+      color: "#5F0101",
+      onClick: handleStatusUpdate,
+      isLoading: isProcessing,
+    },
+    {
+      name: "Print",
+      color: "#5F0101",
+      onClick: () => setIsInvoiceOpen(true),
+    },
+  ];
 
   return (
     <>
@@ -70,7 +98,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
             <div>
               <span className="font-bold">{item.name}</span> ({item.quantity})
               <br />
-              <span className="text-sm text-gray-600">{item.ingredients}</span>
+              <span className="text-sm text-gray-600">{item.description}</span>
             </div>
             <span className="font-semibold flex-shrink-0">
               Ghc {item.price.toFixed(2)}
@@ -121,7 +149,8 @@ const OrderCard: React.FC<OrderCardProps> = ({
               radius="sm"
               className="w-[150px] text-white"
               style={{ backgroundColor: button.color }}
-              onPress={() => handleButtonClick(button.name)}
+              onPress={button.onClick}
+              isLoading={button.isLoading}
             >
               {button.name}
             </Button>
@@ -138,6 +167,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
         orderNumber={orderNumber}
         paymentMethod={paymentMethod}
         orderType={orderType}
+        isCompleted={false}
       />
     </>
   );

@@ -2,205 +2,150 @@ import PageHeader from "@/components/global/PageHeader";
 import CompletedCard from "@/components/pages/orders/CompletedCard";
 import OrderCard from "@/components/pages/orders/OrderCard";
 import { updateSearchParams } from "@/services/actions/searchParams.action";
+import { getAllOrders } from "@/services/order.service";
+import { ORDER_STATUS } from "@/lib/constants";
+import { FormattedOrder } from "@/types/order.types";
+import { FaClipboardList } from "react-icons/fa";
 
-const orderStatuses = ["Incoming", "Processing", "Completed"];
+const orderStatuses = ["Pending", "Processing", "Completed"];
 
-const IncomingOrders = [
-  {
-    orders: [
-      {
-        name: "Bruschetta",
-        quantity: 1,
-        ingredients: "toasted bread, diced tomatoes, garlic, basil, olive oil",
-        price: 80,
-      },
-      {
-        name: "Stuffed Mushrooms",
-        quantity: 2,
-        ingredients: "button mushrooms, breadcrumbs, herbs, garlic, cheese",
-        price: 160,
-      },
-      {
-        name: "Spring Rolls",
-        quantity: 3,
-        ingredients:
-          "rice paper, vegetables (carrots, cucumber, lettuce), herbs, rice noodles",
-        price: 150,
-      },
-    ],
-    orderTime: "18:00",
-    tableNumber: "17",
-    orderNumber: "123456",
-    paymentMethod: "Cash",
-    orderType: "Dine In",
-  },
-  {
-    orders: [
-      {
-        name: "Margherita Pizza",
-        quantity: 1,
-        ingredients: "tomato sauce, mozzarella, basil",
-        price: 120,
-      },
-      {
-        name: "Caesar Salad",
-        quantity: 1,
-        ingredients:
-          "romaine lettuce, croutons, parmesan cheese, caesar dressing",
-        price: 90,
-      },
-    ],
-    orderTime: "18:15",
-    tableNumber: "23",
-    orderNumber: "123457",
-    paymentMethod: "Credit Card",
-    orderType: "Dine In",
-  },
-];
-
-const ProcessingOrders = [
-  {
-    orders: [
-      {
-        name: "Spaghetti Carbonara",
-        quantity: 2,
-        ingredients:
-          "spaghetti, eggs, pecorino cheese, guanciale, black pepper",
-        price: 180,
-      },
-      {
-        name: "Tiramisu",
-        quantity: 1,
-        ingredients: "ladyfingers, coffee, mascarpone cheese, cocoa powder",
-        price: 70,
-      },
-    ],
-    orderTime: "17:45",
-    tableNumber: "8",
-    orderNumber: "123455",
-    paymentMethod: "Cash",
-    orderType: "Dine In",
-  },
-];
-
-const CompletedOrders = [
-  {
-    orders: [
-      {
-        name: "Grilled Salmon",
-        quantity: 2,
-        ingredients: "salmon fillet, lemon, herbs, olive oil",
-        price: 220,
-      },
-      {
-        name: "Chocolate Mousse",
-        quantity: 2,
-        ingredients: "dark chocolate, heavy cream, eggs, sugar",
-        price: 80,
-      },
-    ],
-    orderTime: "19:30",
-    tableNumber: "12",
-    orderNumber: "123458",
-    paymentMethod: "Credit Card",
-    orderType: "Dine In",
-  },
-  {
-    orders: [
-      {
-        name: "Vegetarian Lasagna",
-        quantity: 1,
-        ingredients: "lasagna noodles, vegetables, tomato sauce, cheese",
-        price: 150,
-      },
-      {
-        name: "Garlic Bread",
-        quantity: 1,
-        ingredients: "bread, garlic, butter, herbs",
-        price: 40,
-      },
-    ],
-    orderTime: "20:00",
-    tableNumber: "5",
-    orderNumber: "123459",
-    paymentMethod: "Cash",
-    orderType: "Takeout",
-  },
-];
-
-export default function Orders({
+export default async function Orders({
   searchParams,
 }: {
   searchParams: { status?: string };
 }) {
-  const status = searchParams.status || "Incoming";
+  const orders = await getAllOrders();
+  const status = searchParams.status || "Pending";
 
-  const getStatusButtons = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "incoming":
-        return [
-          { name: "Process", color: "#5F0101" },
-          { name: "Print", color: "#5F0101" },
-        ];
-      case "processing":
-        return [
-          { name: "Complete", color: "#5F0101" },
-          { name: "Print", color: "#5F0101" },
-        ];
-      default:
-        return [];
-    }
+  // Helper to format orders for the UI
+  const formatOrdersForUI = (orders: FormattedOrder[]) => {
+    return orders.map((order) => ({
+      orders: order.orders.map((item) => ({
+        ...item,
+        description: item.description,
+      })),
+      orderTime: order.orderTime,
+      tableNumber: order.tableNumber,
+      orderNumber: order.orderNumber,
+      orderType: order.orderType,
+      status: order.status,
+      paymentMethod: order.paymentMethod,
+    }));
   };
+
+  // Get order counts for each status
+  const getOrderCounts = () => {
+    const counts = {
+      pending: orders.filter((order) => order.status === ORDER_STATUS.PENDING)
+        .length,
+      processing: orders.filter(
+        (order) => order.status === ORDER_STATUS.PROCESSING
+      ).length,
+      completed: orders.filter(
+        (order) =>
+          order.status === ORDER_STATUS.COMPLETED ||
+          order.status === ORDER_STATUS.PAID
+      ).length,
+    };
+    return counts;
+  };
+
+  // Filter orders based on status
+  const getFilteredOrders = (status: string) => {
+    return orders.filter((order) => {
+      switch (status.toLowerCase()) {
+        case "pending":
+          return order.status === ORDER_STATUS.PENDING;
+        case "processing":
+          return order.status === ORDER_STATUS.PROCESSING;
+        case "completed":
+          return (
+            order.status === ORDER_STATUS.COMPLETED ||
+            order.status === ORDER_STATUS.PAID
+          );
+        default:
+          return false;
+      }
+    });
+  };
+
+  const orderCounts = getOrderCounts();
+  const filteredOrders = formatOrdersForUI(getFilteredOrders(status));
+
+  const NoOrdersMessage = () => (
+    <div className="w-full flex flex-col items-center justify-center p-8 text-gray-500">
+      <FaClipboardList size={48} className="mb-4" />
+      <p className="text-lg font-semibold">No orders found</p>
+    </div>
+  );
 
   return (
     <div>
       <PageHeader title="Orders" />
       <div className="flex md:flex-row flex-col flex-wrap gap-6 my-8">
-        {orderStatuses.map((orderStatus) => (
-          <form
-            key={orderStatus}
-            action={updateSearchParams}
-            className="flex-grow md:flex-grow-0"
-          >
-            <input type="hidden" name="status" value={orderStatus} />
-            <button
-              type="submit"
-              className={`w-full md:w-60 min-w-[8rem] py-2 rounded-lg text-base ${
-                status.toLowerCase() === orderStatus.toLowerCase()
-                  ? "bg-[#5F0101] text-white"
-                  : "bg-gray-200 text-[#5F0101] hover:opacity-70"
-              }`}
+        {orderStatuses.map((orderStatus) => {
+          const count =
+            orderStatus.toLowerCase() === "pending"
+              ? orderCounts.pending
+              : orderStatus.toLowerCase() === "processing"
+              ? orderCounts.processing
+              : orderCounts.completed;
+
+          return (
+            <form
+              key={orderStatus}
+              action={updateSearchParams}
+              className="flex-grow md:flex-grow-0"
             >
-              {orderStatus}
-            </button>
-          </form>
-        ))}
+              <input type="hidden" name="status" value={orderStatus} />
+              <button
+                type="submit"
+                className={`w-full md:w-60 min-w-[8rem] py-2 rounded-lg text-base ${
+                  status.toLowerCase() === orderStatus.toLowerCase()
+                    ? "bg-[#5F0101] text-white"
+                    : "bg-gray-200 text-[#5F0101] hover:opacity-70"
+                }`}
+              >
+                {orderStatus} ({count})
+              </button>
+            </form>
+          );
+        })}
       </div>
       <div className="flex flex-wrap gap-4">
-        {status.toLowerCase() === "incoming" &&
-          IncomingOrders.map((order, index) => (
-            <OrderCard
-              key={index}
-              {...order}
-              delay={index * 0.2}
-              statusButtons={getStatusButtons("incoming")}
-              backgroundColor="#F3F4F6"
-            />
-          ))}
-        {status.toLowerCase() === "processing" &&
-          ProcessingOrders.map((order, index) => (
-            <OrderCard
-              key={index}
-              {...order}
-              delay={index * 0.2}
-              statusButtons={getStatusButtons("processing")}
-              backgroundColor="#F6D0D0"
-            />
-          ))}
-        {status.toLowerCase() === "completed" &&
-          CompletedOrders.map((order, index) => (
-            <CompletedCard key={index} {...order} delay={index * 0.2} />
-          ))}
+        {filteredOrders.length === 0 ? (
+          <NoOrdersMessage />
+        ) : (
+          <>
+            {status.toLowerCase() === "pending" &&
+              filteredOrders.map((order, index) => (
+                <OrderCard
+                  key={order.orderNumber}
+                  {...order}
+                  delay={index * 0.2}
+                  backgroundColor="#F3F4F6"
+                />
+              ))}
+            {status.toLowerCase() === "processing" &&
+              filteredOrders.map((order, index) => (
+                <OrderCard
+                  key={order.orderNumber}
+                  {...order}
+                  delay={index * 0.2}
+                  backgroundColor="#F6D0D0"
+                />
+              ))}
+            {status.toLowerCase() === "completed" &&
+              filteredOrders.map((order, index) => (
+                <CompletedCard
+                  key={order.orderNumber}
+                  {...order}
+                  delay={index * 0.2}
+                  isPaid={order.status === ORDER_STATUS.PAID}
+                />
+              ))}
+          </>
+        )}
       </div>
     </div>
   );
