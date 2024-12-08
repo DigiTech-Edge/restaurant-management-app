@@ -14,7 +14,6 @@ import {
   Select,
   SelectItem,
 } from "@nextui-org/react";
-import { QRCodeSVG } from "qrcode.react";
 import { useSession } from "next-auth/react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,9 +23,80 @@ import {
   updateTable,
   deleteTable,
 } from "@/services/reservation.service";
+import { QRCodeDocument } from "@/components/pdf/QRCodePDF";
+import { pdf } from "@react-pdf/renderer";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { capacityOptions } from "@/lib/constants/index";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  PDFDownloadLink,
+  Image,
+  Font,
+} from "@react-pdf/renderer";
+import { QRCodeCanvas } from "qrcode.react";
+
+// Register a nice font for the PDF
+Font.register({
+  family: "Montserrat",
+  src: "https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCs16Hw5aXp-p7K4KLg.ttf",
+});
+
+// PDF styles
+const styles = StyleSheet.create({
+  page: {
+    flexDirection: "column",
+    backgroundColor: "#fff",
+    padding: 40,
+  },
+  header: {
+    marginBottom: 20,
+    borderBottom: "1 solid #5F0101",
+    paddingBottom: 10,
+  },
+  restaurantName: {
+    fontSize: 24,
+    fontFamily: "Montserrat",
+    color: "#5F0101",
+    marginBottom: 10,
+  },
+  tableInfo: {
+    fontSize: 18,
+    fontFamily: "Montserrat",
+    color: "#333",
+    marginBottom: 5,
+  },
+  qrContainer: {
+    alignItems: "center",
+    marginVertical: 30,
+  },
+  qrCode: {
+    width: 200,
+    height: 200,
+  },
+  instructions: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 5,
+  },
+  instructionTitle: {
+    fontSize: 14,
+    fontFamily: "Montserrat",
+    color: "#5F0101",
+    marginBottom: 10,
+  },
+  instructionText: {
+    fontSize: 12,
+    fontFamily: "Montserrat",
+    color: "#666",
+    marginBottom: 5,
+  },
+});
 
 interface TableData {
   id: string;
@@ -77,30 +147,64 @@ export default function TableManagement({
     return `${baseUrl}?${params.toString()}`;
   };
 
-  const handleDownloadQR = () => {
+  const handleDownloadQR = async () => {
     if (!selectedTable) return;
+    setIsLoading(true);
 
-    const svg = document.getElementById("table-qr");
-    if (!svg) return;
+    try {
+      // Create a temporary div to render the QR code
+      const tempDiv = document.createElement("div");
+      const qrCode = (
+        <QRCodeCanvas
+          value={generateQRValue(selectedTable)}
+          size={1000}
+          level="H"
+          bgColor="#ffffff"
+        />
+      );
 
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    const img = new Image();
+      // Render QR code to temp div
+      // @ts-ignore
+      const ReactDOM = await import("react-dom/client");
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(qrCode);
 
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx?.drawImage(img, 0, 0);
-      const pngFile = canvas.toDataURL("image/png");
+      // Wait for QR code to render and get canvas data
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const canvas = tempDiv.querySelector("canvas");
+      if (!canvas) {
+        throw new Error("Failed to generate QR code");
+      }
 
-      const downloadLink = document.createElement("a");
-      downloadLink.download = `table-${selectedTable.number}-qr.png`;
-      downloadLink.href = pngFile;
-      downloadLink.click();
-    };
+      // Convert canvas to data URL
+      const qrCodeUrl = canvas.toDataURL("image/png");
 
-    img.src = "data:image/svg+xml;base64," + btoa(svgData);
+      // Generate PDF
+      const blob = await pdf(
+        <QRCodeDocument
+          table={selectedTable}
+          qrCodeUrl={qrCodeUrl}
+          restaurantName={session?.user?.name || "Our Restaurant"}
+        />
+      ).toBlob();
+
+      // Download PDF
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `table-${selectedTable.number}-qr.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("QR Code PDF generated successfully");
+    } catch (error) {
+      console.error("Error generating QR Code PDF:", error);
+      toast.error("Failed to generate QR Code PDF");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddTable = () => {
@@ -375,7 +479,7 @@ export default function TableManagement({
                       <h3 className="text-lg font-semibold mb-2">QR Code</h3>
                       {selectedTable ? (
                         <div className="flex flex-col items-center gap-4">
-                          <QRCodeSVG
+                          <QRCodeCanvas
                             id="table-qr"
                             value={generateQRValue(selectedTable)}
                             size={200}

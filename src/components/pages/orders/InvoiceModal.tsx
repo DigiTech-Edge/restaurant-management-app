@@ -1,14 +1,10 @@
 "use client";
 
 import React from "react";
-import {
-  Modal,
-  ModalContent,
-  ModalBody,
-} from "@nextui-org/react";
+import { Modal, ModalContent, ModalBody } from "@nextui-org/react";
 import dynamic from "next/dynamic";
 
-const InvoicePDF = dynamic(() => import("./InvoicePDF"), {
+const InvoicePDF = dynamic(() => import("../../pdf/InvoicePDF"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center min-h-[600px]">
@@ -48,12 +44,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
   isCompleted,
 }) => {
   return (
-    <Modal 
-      isOpen={isOpen} 
-      onClose={onClose}
-      size="2xl"
-      scrollBehavior="inside"
-    >
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
       <ModalContent>
         <ModalBody>
           <InvoicePDF

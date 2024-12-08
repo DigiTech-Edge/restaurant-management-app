@@ -116,7 +116,7 @@ export function ReservationSidebar({
               All reservations need to be attended to on time. Treat customers
               fairly and receive them with warmth.
             </p>
-            <div className="flex items-center justify-between">
+            <div className="flex items-start justify-between">
               <div className="flex items-center justify-between mb-4">
                 <input
                   type="date"
@@ -127,7 +127,7 @@ export function ReservationSidebar({
               </div>
               <Button
                 size="sm"
-                className="bg-[#5F0101] text-white"
+                className="bg-[#5F0101] text-white mt-2"
                 onClick={onAddReservation}
               >
                 Add New Reservation

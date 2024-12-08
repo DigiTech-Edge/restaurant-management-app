@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button, Input, Checkbox } from "@nextui-org/react";
-import { FaGoogle } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
 import Link from "next/link";
 import AuthCard from "@/components/shared/AuthCard";
 import toast from "react-hot-toast";
@@ -23,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const LoginForm = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -97,7 +98,7 @@ const LoginForm = () => {
         <div className="flex flex-col gap-2">
           <Input
             {...register("password")}
-            type="password"
+            type={showPassword ? "text" : "password"}
             label="Password"
             labelPlacement="outside"
             placeholder="Enter your password"
@@ -107,6 +108,18 @@ const LoginForm = () => {
             classNames={{
               label: "text-[#5f0101]",
             }}
+            endContent={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {!showPassword ? (
+                  <FaEye className="text-[#5f0101]" />
+                ) : (
+                  <FaEyeSlash className="text-[#5f0101]" />
+                )}
+              </button>
+            }
           />
           <Link
             href="/forgot-password"
@@ -115,7 +128,7 @@ const LoginForm = () => {
             Forgot password?
           </Link>
         </div>
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <Checkbox
             {...register("rememberMe")}
             size="sm"
@@ -124,7 +137,7 @@ const LoginForm = () => {
           >
             Remember for 30 days
           </Checkbox>
-        </div>
+        </div> */}
         <Button
           type="submit"
           color="danger"

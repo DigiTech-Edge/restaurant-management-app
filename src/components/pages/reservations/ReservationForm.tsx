@@ -140,8 +140,6 @@ export function ReservationForm({
     defaultValues: getInitialValues(),
   });
 
-  console.log(getInitialValues());
-
   // Single useEffect to handle form state
   useEffect(() => {
     const values = getInitialValues();
