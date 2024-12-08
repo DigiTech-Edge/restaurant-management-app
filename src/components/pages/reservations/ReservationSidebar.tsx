@@ -2,8 +2,9 @@
 
 import { Button, Card } from "@nextui-org/react";
 import { BsCalendar3 } from "react-icons/bs";
-import { IoClose } from "react-icons/io5";
+import { IoCalendarOutline, IoClose } from "react-icons/io5";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export interface Reservation {
   customerName: string;
@@ -118,9 +119,25 @@ export function ReservationSidebar({
             Motive of the reservation will be displayed here.
           </p>
 
-          {renderReservationList(reservations.morning, "Morning")}
-          {renderReservationList(reservations.afternoon, "Afternoon")}
-          {renderReservationList(reservations.evening, "Evening")}
+          {!reservations ||
+          !(
+            reservations.morning.length ||
+            reservations.afternoon.length ||
+            reservations.evening.length
+          ) ? (
+            <div className={cn("w-full h-full flex flex-col")}>
+              <div className="flex flex-col items-center justify-center flex-1 p-4 text-gray-500">
+                <IoCalendarOutline className="w-12 h-12 mb-2" />
+                <p className="text-lg font-medium">No reservations found</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {renderReservationList(reservations.morning, "Morning")}
+              {renderReservationList(reservations.afternoon, "Afternoon")}
+              {renderReservationList(reservations.evening, "Evening")}
+            </>
+          )}
         </div>
       </div>
     </div>

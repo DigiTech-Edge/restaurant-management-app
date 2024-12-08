@@ -9,7 +9,8 @@ import { cn } from "@/lib/utils";
 
 interface TableProps {
   id: string;
-  seats: number;
+  capacity: number;
+  number: number;
   isReserved?: boolean;
   onClick?: () => void;
   className?: string;
@@ -21,15 +22,16 @@ const Seat = () => (
 
 export function Table({
   id,
-  seats,
+  capacity,
+  number,
   isReserved,
   onClick,
   className,
 }: TableProps) {
-  const config = tableConfigurations[seats] || {
+  const config = tableConfigurations[capacity] || {
     width: 120,
     height: 80,
-    seats: [],
+    capacity: [],
   };
   const seatSize = 50; // Increased chair size
 
@@ -42,8 +44,8 @@ export function Table({
       }}
       onClick={onClick}
     >
-      {/* Render seats */}
-      {config.seats.map((seat: SeatPosition, index: number) => {
+      {/* Render capacity */}
+      {config.capacity.map((seat: SeatPosition, index: number) => {
         const xPos = (config.width / 2) * seat.x;
         const yPos = (config.height / 2) * seat.y;
 
@@ -79,7 +81,7 @@ export function Table({
         }}
       >
         <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-sm font-medium">
-          {id}
+          T-{number}
         </span>
       </div>
     </div>

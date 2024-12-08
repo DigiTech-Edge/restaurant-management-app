@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Modal,
   ModalContent,
@@ -11,23 +11,32 @@ import {
   useDisclosure,
   Input,
   Divider,
+  Select,
+  SelectItem,
 } from "@nextui-org/react";
 import { QRCodeSVG } from "qrcode.react";
 import { useSession } from "next-auth/react";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import {
+  createTable,
+  updateTable,
+  deleteTable,
+} from "@/services/reservation.service";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 interface TableData {
   id: string;
   number: number;
   capacity: number;
-  status: "available" | "occupied" | "reserved";
 }
 
 interface TableManagementProps {
   isOpen: boolean;
   onClose: () => void;
+  tables: TableData[];
 }
 
 interface TableFormData {
@@ -38,20 +47,39 @@ interface TableFormData {
 export default function TableManagement({
   isOpen,
   onClose,
+  tables,
 }: TableManagementProps) {
+  const router = useRouter();
   const { data: session } = useSession();
   const [selectedTable, setSelectedTable] = useState<TableData | null>(null);
-  const [tables, setTables] = useState<TableData[]>([
-    { id: "1", number: 1, capacity: 4, status: "available" },
-    { id: "2", number: 2, capacity: 2, status: "occupied" },
-    { id: "3", number: 3, capacity: 6, status: "reserved" },
-  ]);
+  const [tablesData, setTablesData] = useState<TableData[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState<TableData | null>(null);
   const [formData, setFormData] = useState<TableFormData>({
     number: "",
     capacity: "",
   });
-  const [tableToDelete, setTableToDelete] = useState<TableData | null>(null);
+
+  useEffect(() => {
+    setTablesData(tables);
+  }, [tables]);
+
+  const capacityOptions = [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+  ];
 
   const generateQRValue = (table: TableData) => {
     if (!session?.user?.id) return "";
@@ -111,53 +139,87 @@ export default function TableManagement({
     setTableToDelete(table);
   };
 
-  const confirmDeleteTable = () => {
+  const confirmDeleteTable = async () => {
     if (!tableToDelete) return;
-    setTables(tables.filter((table) => table.id !== tableToDelete.id));
-    if (selectedTable?.id === tableToDelete.id) {
-      setSelectedTable(null);
+    try {
+      setIsDeleting(true);
+      await deleteTable(tableToDelete.id);
+      toast.success("Table deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete table");
+      console.error("Error deleting table:", error);
+    } finally {
+      setIsDeleting(false);
+      setTableToDelete(null);
     }
-    setTableToDelete(null);
   };
 
-  const handleSaveTable = () => {
-    const newTable = {
-      id: selectedTable?.id || Date.now().toString(),
-      number: parseInt(formData.number),
-      capacity: parseInt(formData.capacity),
-      status: selectedTable?.status || "available",
-    };
+  const handleSaveTable = async () => {
+    try {
+      if (!formData.number || !formData.capacity) {
+        toast.error("Please fill in all fields");
+        return;
+      }
 
-    if (selectedTable) {
-      setTables(
-        tables.map((table) =>
-          table.id === selectedTable.id ? newTable : table
-        )
-      );
-    } else {
-      setTables([...tables, newTable]);
+      const tableNumber = parseInt(formData.number);
+      const tableCapacity = parseInt(formData.capacity);
+
+      if (isNaN(tableNumber) || tableNumber < 1) {
+        toast.error("Please enter a valid table number");
+        return;
+      }
+
+      if (isNaN(tableCapacity) || tableCapacity < 1) {
+        toast.error("Please select a valid capacity");
+        return;
+      }
+
+      setIsLoading(true);
+      const tableData = {
+        number: tableNumber,
+        capacity: tableCapacity,
+      };
+
+      if (selectedTable) {
+        await updateTable(selectedTable.id, tableData);
+        toast.success("Table updated successfully");
+      } else {
+        await createTable(tableData);
+        toast.success("Table created successfully");
+      }
+
+      setIsEditing(false);
+      setSelectedTable(null);
+      setFormData({
+        number: "",
+        capacity: "",
+      });
+    } catch (error) {
+      const action = selectedTable ? "updating" : "creating";
+      if (error instanceof Error) {
+        toast.error(`Error ${action} table: ${error.message}`);
+      } else {
+        toast.error(`Failed to ${action} table`);
+      }
+      console.error("Error saving table:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsEditing(false);
-    setFormData({
-      number: "",
-      capacity: "",
-    });
   };
 
   const slideVariants = {
     enter: {
       x: "100%",
-      opacity: 0
+      opacity: 0,
     },
     center: {
       x: 0,
-      opacity: 1
+      opacity: 1,
     },
     exit: {
       x: "-100%",
-      opacity: 0
-    }
+      opacity: 0,
+    },
   };
 
   return (
@@ -189,39 +251,58 @@ export default function TableManagement({
                   variants={slideVariants}
                   transition={{
                     x: { type: "spring", stiffness: 300, damping: 30 },
-                    opacity: { duration: 0.2 }
+                    opacity: { duration: 0.2 },
                   }}
                   className="w-full"
                 >
-                  <div className="space-y-4">
+                  <div className="flex gap-4">
                     <Input
                       label="Table Number"
                       type="number"
                       value={formData.number}
                       onChange={(e) =>
-                        setFormData({ ...formData, number: e.target.value })
+                        setFormData({
+                          ...formData,
+                          number: e.target.value,
+                        })
                       }
+                      min={1}
+                      required
                     />
-                    <Input
+                    <Select
                       label="Capacity"
-                      type="number"
-                      value={formData.capacity}
-                      onChange={(e) =>
-                        setFormData({ ...formData, capacity: e.target.value })
+                      selectedKeys={
+                        formData.capacity ? [formData.capacity] : []
                       }
-                    />
-                    <div className="flex gap-2 justify-end">
-                      <Button variant="light" onClick={() => setIsEditing(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        color="primary"
-                        className="bg-[#5F0101]"
-                        onClick={handleSaveTable}
-                      >
-                        Save Table
-                      </Button>
-                    </div>
+                      onSelectionChange={(keys) => {
+                        const selectedKeys = Array.from(keys);
+                        if (selectedKeys.length > 0) {
+                          setFormData({
+                            ...formData,
+                            capacity: selectedKeys[0].toString(),
+                          });
+                        }
+                      }}
+                    >
+                      {capacityOptions.map((num) => (
+                        <SelectItem key={num} value={num}>
+                          {num}
+                        </SelectItem>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="flex gap-2 justify-end mt-4">
+                    <Button variant="light" onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      color="primary"
+                      className="bg-[#5F0101]"
+                      onClick={handleSaveTable}
+                      isLoading={isLoading}
+                    >
+                      Save Table
+                    </Button>
                   </div>
                 </motion.div>
               ) : (
@@ -233,7 +314,7 @@ export default function TableManagement({
                   variants={slideVariants}
                   transition={{
                     x: { type: "spring", stiffness: 300, damping: 30 },
-                    opacity: { duration: 0.2 }
+                    opacity: { duration: 0.2 },
                   }}
                   className="w-full"
                 >
@@ -241,8 +322,8 @@ export default function TableManagement({
                     <div>
                       <h3 className="text-lg font-semibold mb-2">Tables</h3>
                       <div className="space-y-2">
-                        {tables.length > 0 ? (
-                          tables.map((table) => (
+                        {tablesData.length > 0 ? (
+                          tablesData.map((table) => (
                             <div
                               key={table.id}
                               className={`p-4 rounded-lg border cursor-pointer ${
@@ -254,23 +335,14 @@ export default function TableManagement({
                             >
                               <div className="flex justify-between items-center">
                                 <div>
-                                  <p className="font-medium">Table {table.number}</p>
+                                  <p className="font-medium">
+                                    Table {table.number}
+                                  </p>
                                   <p className="text-sm text-gray-500">
                                     Capacity: {table.capacity}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span
-                                    className={`px-2 py-1 rounded-full text-xs ${
-                                      table.status === "available"
-                                        ? "bg-green-100 text-green-800"
-                                        : table.status === "occupied"
-                                        ? "bg-red-100 text-red-800"
-                                        : "bg-yellow-100 text-yellow-800"
-                                    }`}
-                                  >
-                                    {table.status}
-                                  </span>
                                   <Button
                                     isIconOnly
                                     size="sm"
@@ -361,6 +433,7 @@ export default function TableManagement({
         onConfirm={confirmDeleteTable}
         title="Delete Table"
         message={`Are you sure you want to delete Table ${tableToDelete?.number}? This action cannot be undone.`}
+        isLoading={isDeleting}
       />
     </>
   );

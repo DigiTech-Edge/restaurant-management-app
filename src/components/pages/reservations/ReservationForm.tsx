@@ -24,7 +24,12 @@ interface ReservationFormProps {
   onClose?: () => void;
   initialData?: Partial<ReservationFormData>;
   onSubmit: (data: ReservationFormData) => void;
-  tables: Array<{ id: string; seats: number; isReserved?: boolean }>;
+  tables: Array<{
+    id: string;
+    capacity: number;
+    number: number;
+    isReserved?: boolean;
+  }>;
 }
 
 const titles = [
@@ -68,17 +73,15 @@ export function ReservationForm({
         z-50
       `}
     >
-      <form onSubmit={handleSubmit(onSubmitForm)} className="h-full flex flex-col">
+      <form
+        onSubmit={handleSubmit(onSubmitForm)}
+        className="h-full flex flex-col"
+      >
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">
             {isEditing ? "Edit Reservation" : "New Reservation"}
           </h2>
-          <Button
-            isIconOnly
-            variant="light"
-            onClick={onClose}
-            type="button"
-          >
+          <Button isIconOnly variant="light" onClick={onClose} type="button">
             <IoClose className="w-6 h-6" />
           </Button>
         </div>
@@ -88,7 +91,9 @@ export function ReservationForm({
             <h3 className="font-medium">Customer Details</h3>
             <Select
               label="Title"
-              defaultSelectedKeys={initialData?.title ? [initialData.title] : []}
+              defaultSelectedKeys={
+                initialData?.title ? [initialData.title] : []
+              }
               isInvalid={!!errors.title}
               errorMessage={errors.title?.message}
               {...register("title")}
@@ -157,10 +162,13 @@ export function ReservationForm({
               {...register("tableNumber")}
             >
               {(tables || [])
-                .filter((table) => !table.isReserved || table.id === initialData?.tableNumber)
+                .filter(
+                  (table) =>
+                    !table.isReserved || table.id === initialData?.tableNumber
+                )
                 .map((table) => (
                   <SelectItem key={table.id} value={table.id}>
-                    {`${table.id} (${table.seats} seats)`}
+                    {`T-${table.number} (${table.capacity} capacity)`}
                   </SelectItem>
                 ))}
             </Select>
@@ -176,11 +184,7 @@ export function ReservationForm({
           >
             Close
           </Button>
-          <Button
-            color="primary"
-            type="submit"
-            className="flex-1 bg-[#5F0101]"
-          >
+          <Button color="primary" type="submit" className="flex-1 bg-[#5F0101]">
             Save
           </Button>
         </div>

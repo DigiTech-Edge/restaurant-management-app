@@ -2,6 +2,7 @@
 
 import { auth } from "@/utils/auth";
 import axios from "@/utils/axios";
+import { handleApiError } from "@/utils/api-error";
 import { revalidatePath } from "next/cache";
 import {
   ApiResponse,
@@ -34,8 +35,7 @@ export async function getAllCategories() {
     const data = response.data as GetCategoriesResponse;
     return data.categories;
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -60,8 +60,7 @@ export async function createCategory(data: CreateCategoryRequest) {
     revalidatePath("/menu");
     return response.data as ApiResponse<Category>;
   } catch (error) {
-    console.error("Error creating category:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -85,8 +84,7 @@ export async function updateCategory(id: string, data: UpdateCategoryRequest) {
     revalidatePath("/menu");
     return response.data as ApiResponse<Category>;
   } catch (error) {
-    console.error("Error updating category:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -105,8 +103,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
 
     revalidatePath("/menu");
   } catch (error) {
-    console.error("Error deleting category:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -131,8 +128,7 @@ export async function createMenuItem(data: CreateMenuItemRequest) {
     revalidatePath("/menu");
     return response.data as ApiResponse<MenuItem>;
   } catch (error) {
-    console.error("Error creating menu item:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -159,8 +155,7 @@ export async function updateMenuItem(
     revalidatePath("/menu");
     return response.data as ApiResponse<MenuItem>;
   } catch (error) {
-    console.error("Error updating menu item:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -183,8 +178,7 @@ export async function deleteMenuItem(menuItemId: string) {
     revalidatePath("/menu");
     return response.data as ApiResponse<void>;
   } catch (error) {
-    console.error("Error deleting menu item:", error);
-    throw error;
+    handleApiError(error);
   }
 }
 
@@ -206,7 +200,6 @@ export async function getAllMenuItems(): Promise<MenuItem[]> {
 
     return response.data.menuItems;
   } catch (error) {
-    console.error("Error fetching menu items:", error);
-    throw error;
+    handleApiError(error);
   }
 }

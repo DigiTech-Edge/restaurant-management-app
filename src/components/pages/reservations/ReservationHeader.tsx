@@ -6,11 +6,21 @@ import { FaPlus } from "react-icons/fa";
 import TableManagement from "./TableManagement";
 import { useState } from "react";
 
-interface ReservationHeaderProps {
-  onMenuClick: () => void;
+interface TableData {
+  id: string;
+  number: number;
+  capacity: number;
 }
 
-export function ReservationHeader({ onMenuClick }: ReservationHeaderProps) {
+interface ReservationHeaderProps {
+  onMenuClick: () => void;
+  tables: TableData[];
+}
+
+export function ReservationHeader({
+  onMenuClick,
+  tables,
+}: ReservationHeaderProps) {
   const [isTableManagementOpen, setIsTableManagementOpen] = useState(false);
 
   return (
@@ -40,10 +50,13 @@ export function ReservationHeader({ onMenuClick }: ReservationHeaderProps) {
         </Button>
       </div>
 
-      <TableManagement
-        isOpen={isTableManagementOpen}
-        onClose={() => setIsTableManagementOpen(false)}
-      />
+      {isTableManagementOpen && (
+        <TableManagement
+          isOpen={isTableManagementOpen}
+          onClose={() => setIsTableManagementOpen(false)}
+          tables={tables}
+        />
+      )}
     </>
   );
 }

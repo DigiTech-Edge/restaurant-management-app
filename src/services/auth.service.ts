@@ -1,6 +1,7 @@
 "use server";
 
 import axios from "@/utils/axios";
+import { handleApiError } from "@/utils/api-error";
 import { AuthError } from "next-auth";
 
 export async function authenticate(email: string, password: string) {
@@ -19,10 +20,10 @@ export async function authenticate(email: string, password: string) {
 
     return response.data;
   } catch (error) {
-    throw new AuthError({
-      type: "CredentialsSignin",
-      message: error instanceof Error ? error.message : "Something went wrong",
-    });
+    if (error instanceof AuthError) {
+      throw error;
+    }
+    handleApiError(error);
   }
 }
 
@@ -34,6 +35,6 @@ export async function updatePassword(email: string, password: string) {
     });
     return response.data;
   } catch (error) {
-    throw new Error(error instanceof Error ? error.message : "Failed to update password");
+    handleApiError(error);
   }
 }

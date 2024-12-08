@@ -146,7 +146,7 @@ export default function MenuItemsTable({
                 </Chip>
               </TableCell>
               <TableCell>
-                <div className="flex gap-2">
+                <div className="flex">
                   <Button
                     isIconOnly
                     variant="light"
