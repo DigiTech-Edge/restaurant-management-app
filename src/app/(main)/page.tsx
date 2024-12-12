@@ -3,7 +3,7 @@ import DashboardSummary from "@/components/pages/dashboard/DashboardSummary";
 import RecentOrders from "@/components/pages/dashboard/RecentOrders";
 import PopularItems from "@/components/pages/dashboard/PopularItems";
 import ReservationOverview from "@/components/pages/dashboard/ReservationOverview";
-import { auth } from "@/utils/auth";
+import { auth } from "@/utils/auth/auth";
 
 // Dummy data (in a real app, this would come from your backend)
 const dashboardData = {

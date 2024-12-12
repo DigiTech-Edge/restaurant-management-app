@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/utils/auth";
+import { auth } from "@/utils/auth/auth";
 import axios from "@/utils/axios";
 import { handleApiError } from "@/utils/api-error";
 import { revalidatePath } from "next/cache";

@@ -1,4 +1,4 @@
-const axios = require("axios").default;
+import axios from "axios";
 
 const baseURL = "https://api-resturant-management.onrender.com/restaurant";
 

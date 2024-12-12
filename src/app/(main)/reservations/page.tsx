@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { getAllTables, getReservations } from "@/services/reservation.service";
 import ReservationsClient from "@/components/pages/reservations/ReservationsClient";
 import PageHeader from "@/components/global/PageHeader";
-import { formatReservationsByTimeSlot } from "@/utils/reservation";
+import { formatReservationsByTimeSlot } from "@/helpers/reservation";
 
 export default async function ReservationsPage() {
   const [tablesResponse, reservationsResponse] = await Promise.all([

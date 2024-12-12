@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button, Input, Checkbox } from "@nextui-org/react";
 import { FaEye, FaEyeSlash, FaGoogle } from "react-icons/fa";
@@ -15,14 +15,15 @@ import { z } from "zod";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  rememberMe: z.boolean().default(false),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -34,9 +35,22 @@ const LoginForm = () => {
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
+
+  // Handle error from URL parameters
+  useEffect(() => {
+    const error = searchParams.get("error");
+    if (error) {
+      // Convert error parameter to user-friendly message
+      const errorMessage =
+        error === "Configuration"
+          ? "Failed to authenticate with Google"
+          : error;
+      toast.error(errorMessage);
+      router.push("/login");
+    }
+  }, [searchParams]);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
@@ -64,13 +78,16 @@ const LoginForm = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    return;
-    setIsLoading(true);
+    setIsGoogleLoading(true);
     try {
-      await signIn("google", { callbackUrl: "/" });
-    } catch (error) {
-      toast.error("Failed to sign in with Google");
-      setIsLoading(false);
+      await signIn("google", {
+        callbackUrl: "/",
+        redirect: true,
+      });
+    } catch (error: any) {
+      console.error("Google sign-in error:", error);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -154,8 +171,8 @@ const LoginForm = () => {
           className="w-full border-[#5f0101] text-[#5f0101]"
           size="lg"
           startContent={<FaGoogle />}
-          isDisabled={isLoading}
-          onClick={handleGoogleSignIn}
+          isLoading={isGoogleLoading}
+          onPress={handleGoogleSignIn}
         >
           Sign in with Google
         </Button>

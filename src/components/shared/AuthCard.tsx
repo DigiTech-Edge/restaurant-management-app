@@ -9,16 +9,16 @@ interface AuthCardProps {
   title: string;
   subtitle: string;
   children: ReactNode;
-  imageSrc: string;
-  imageAlt: string;
+  imageSrc?: string;
+  imageAlt?: string;
 }
 
 const AuthCard = ({
   title,
   subtitle,
   children,
-  imageSrc,
-  imageAlt,
+  imageSrc = "/images/login/funchef.png",
+  imageAlt = "Auth Background",
 }: AuthCardProps) => {
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">

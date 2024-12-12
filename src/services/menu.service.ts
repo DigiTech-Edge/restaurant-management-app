@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/utils/auth";
+import { auth } from "@/utils/auth/auth";
 import axios from "@/utils/axios";
 import { handleApiError } from "@/utils/api-error";
 import { revalidatePath } from "next/cache";
@@ -71,15 +71,11 @@ export async function updateCategory(id: string, data: UpdateCategoryRequest) {
       throw new Error("Unauthorized");
     }
 
-    const response = await axios.patch(
-      `/main/update-category/${id}`,
-      data,
-      {
-        headers: {
-          Authorization: `${session.user.accessToken}`,
-        },
-      }
-    );
+    const response = await axios.patch(`/main/update-category/${id}`, data, {
+      headers: {
+        Authorization: `${session.user.accessToken}`,
+      },
+    });
 
     revalidatePath("/menu");
     return response.data as ApiResponse<Category>;

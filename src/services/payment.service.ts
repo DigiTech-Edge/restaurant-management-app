@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/utils/auth";
+import { auth } from "@/utils/auth/auth";
 import axios from "@/utils/axios";
 import { handleApiError } from "@/utils/api-error";
 import { revalidatePath } from "next/cache";
@@ -9,10 +9,10 @@ import { ORDER_STATUS } from "@/lib/constants";
 export async function generatePaymentQRCode(orderId: string) {
   // Generate a unique payment token that includes the orderId
   const paymentToken = `${orderId}_${Date.now()}`;
-  
+
   // In a real application, you would store this token in a database
   // and associate it with the order
-  
+
   return paymentToken;
 }
 

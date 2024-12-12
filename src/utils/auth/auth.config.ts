@@ -1,12 +1,17 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { authenticate } from "../services/auth.service";
+import Google from "next-auth/providers/google";
+import {
+  authenticate,
+  authenticateWithGoogle,
+} from "../../services/auth.service";
 
 const authRoutes = ["/login", "/forgot-password", "/reset-password"];
 
 export const authConfig = {
   pages: {
     signIn: "/login",
+    error: "/login",
   },
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
@@ -28,19 +33,46 @@ export const authConfig = {
 
       return true;
     },
-    jwt({ token, user }) {
-      if (user) {
-        // Extract token from restaurantData
+    async jwt({ token, user, account, profile }) {
+      if (account?.provider === "google") {
+        try {
+          if (!profile?.email || !profile?.sub) {
+            throw new Error("Required Google profile data is missing");
+          }
+
+          const response = await authenticateWithGoogle(
+            profile.email,
+            profile.sub
+          );
+
+          if (!response?.restaurantData) {
+            throw new Error("Invalid response from server");
+          }
+
+          const { restaurantData } = response;
+
+          // Update token with restaurant data
+          token.accessToken = restaurantData.token;
+          token.id = restaurantData.id;
+          // Store all restaurant data except sensitive information
+          const { token: _, ...safeRestaurantData } = restaurantData;
+          token.restaurant = safeRestaurantData;
+          return token;
+        } catch (error: any) {
+          console.error("Error in Google authentication:", error);
+          throw error;
+        }
+      } else if (user) {
+        // Existing credentials logic
         token.accessToken = user.token;
         token.id = user.id!;
-
-        // Store restaurant data without sensitive information
         const {
           password,
           token: _,
           ...safeRestaurantData
         } = user.restaurantData;
         token.restaurant = safeRestaurantData;
+        return token;
       }
       return token;
     },
@@ -56,6 +88,7 @@ export const authConfig = {
     },
   },
   providers: [
+    Google,
     Credentials({
       async authorize(credentials) {
         try {
