@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Input, Textarea, Button, Avatar } from "@nextui-org/react";
+import { Input, Textarea, Button } from "@nextui-org/react";
 import { FaEdit } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,8 @@ import { updateProfile } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
 import { RestaurantData } from "@/types/next-auth";
 import Map from "./Map";
+import { uploadImage } from "@/utils/supabase/storage";
+import Image from "next/image";
 
 const profileSchema = z.object({
   name: z.string().min(1, "Restaurant name is required"),
@@ -31,7 +33,7 @@ interface ProfileSettingsProps {
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   restaurantData,
 }) => {
-  const [avatar, setAvatar] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
   const [position, setPosition] = useState<[number, number]>([
     restaurantData.latitude || 0,
     restaurantData.longitude || 0,
@@ -41,6 +43,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
@@ -55,15 +58,41 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     },
   });
 
-  const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const currentImage = watch("image");
+
+  const handleBannerUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-        setValue("image", reader.result as string);
+      // Use window.Image to avoid conflict with next/image
+      const img = new window.Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = async () => {
+        URL.revokeObjectURL(objectUrl);
+
+        if (img.width !== 500 || img.height !== 200) {
+          toast.error("Banner must be 500x200 pixels");
+          return;
+        }
+
+        setIsUploading(true);
+        try {
+          const result = await uploadImage(file);
+          if (result.url) {
+            setValue("image", result.url);
+            toast.success("Banner uploaded successfully");
+          }
+        } catch (error) {
+          toast.error("Failed to upload banner");
+          console.error("Error uploading banner:", error);
+        } finally {
+          setIsUploading(false);
+        }
       };
-      reader.readAsDataURL(file);
+
+      img.src = objectUrl;
     }
   };
 
@@ -82,26 +111,39 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       <h2 className="text-2xl font-bold">Restaurant Profile</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="flex flex-col items-center mb-6">
-          <div className="relative">
-            <Avatar
-              src={avatar}
-              alt="Restaurant Logo"
-              className="w-32 h-32 text-large"
-            />
+          <div className="relative w-full h-[200px] bg-gray-100 rounded-lg overflow-hidden">
+            {currentImage ? (
+              <Image
+                src={currentImage}
+                alt="Restaurant Banner"
+                fill
+                className="object-cover"
+                sizes="500px"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                No banner uploaded
+              </div>
+            )}
             <label
-              htmlFor="avatar-upload"
-              className="absolute bottom-0 right-0 bg-[#5F0101] text-white p-2 rounded-full cursor-pointer"
+              htmlFor="banner-upload"
+              className="absolute bottom-4 right-4 bg-[#5F0101] text-white p-3 rounded-full cursor-pointer hover:bg-[#4a0101] transition-colors z-10"
             >
-              <FaEdit size={16} />
+              <FaEdit size={20} />
               <input
-                id="avatar-upload"
+                id="banner-upload"
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={handleAvatarUpload}
+                onChange={handleBannerUpload}
+                disabled={isUploading}
               />
             </label>
           </div>
+          <p className="text-sm text-gray-500 mt-2">
+            Upload a 500x200 pixel banner image
+          </p>
         </div>
 
         <div className="space-y-6">

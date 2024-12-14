@@ -31,16 +31,18 @@ const SettingsContent: React.FC<SettingsContentProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row gap-8 relative">
-      <SettingsSidebar activeSection={section} />
-      <motion.div
+    <div className="flex flex-col md:flex-row gap-8 min-h-[calc(100vh-10rem)] overflow-y-auto">
+      <aside className="md:sticky md:top-0 md:h-fit">
+        <SettingsSidebar activeSection={section} />
+      </aside>
+      <motion.main
         className="flex-1"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
         {renderContent()}
-      </motion.div>
+      </motion.main>
     </div>
   );
 };

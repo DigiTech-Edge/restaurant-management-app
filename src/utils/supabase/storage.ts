@@ -1,6 +1,5 @@
 "use client";
 
-import env from "@/env";
 import { createClient } from "../supabase/client";
 
 // Create a Supabase client for use in component
@@ -13,7 +12,7 @@ export interface UploadResult {
 
 export const uploadImage = async (
   file: File,
-  bucket: string = env.buckets.products,
+  bucket: string = "banners",
   onProgress?: (progress: number) => void
 ): Promise<UploadResult> => {
   try {
@@ -68,7 +67,7 @@ export const uploadImage = async (
 
 export const deleteImage = async (
   imageUrl: string,
-  bucket: string = env.buckets.products
+  bucket: string = "banners"
 ): Promise<{ success: boolean; error: Error | null }> => {
   try {
     const fileName = imageUrl.split("/").pop();
@@ -95,7 +94,7 @@ export const deleteImage = async (
 
 export const uploadMultipleImages = async (
   files: File[],
-  bucket: string = env.buckets.products,
+  bucket: string = "banners",
   onProgress?: (progress: number) => void
 ): Promise<string[]> => {
   const urls: string[] = [];
