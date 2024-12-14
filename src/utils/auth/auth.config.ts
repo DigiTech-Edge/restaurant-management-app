@@ -1,10 +1,7 @@
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
-import {
-  authenticate,
-  authenticateWithGoogle,
-} from "../../services/auth.service";
+import { authenticate, authenticateWithGoogle } from "@/services/auth.service";
 
 const authRoutes = ["/login", "/forgot-password", "/reset-password"];
 
@@ -50,11 +47,8 @@ export const authConfig = {
           }
 
           const { restaurantData } = response;
-
-          // Update token with restaurant data
           token.accessToken = restaurantData.token;
           token.id = restaurantData.id;
-          // Store all restaurant data except sensitive information
           const { token: _, ...safeRestaurantData } = restaurantData;
           token.restaurant = safeRestaurantData;
           return token;
@@ -63,7 +57,6 @@ export const authConfig = {
           throw error;
         }
       } else if (user) {
-        // Existing credentials logic
         token.accessToken = user.token;
         token.id = user.id!;
         const {

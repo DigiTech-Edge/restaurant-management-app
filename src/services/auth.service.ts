@@ -3,6 +3,8 @@
 import axios from "@/utils/axios";
 import { handleApiError } from "@/utils/api-error";
 import { AuthError } from "next-auth";
+import { RestaurantData } from "@/types/next-auth";
+import { auth, unstable_update } from "@/utils/auth/auth";
 
 export async function authenticate(email: string, password: string) {
   try {
@@ -63,6 +65,38 @@ export async function updatePassword(email: string, password: string) {
       email,
       password,
     });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function updateProfile(
+  data: Partial<Omit<RestaurantData, "id" | "rating" | "password" | "token">>
+) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.accessToken || !session?.user?.id) {
+      throw new Error("Unauthorized");
+    }
+
+    const response = await axios.patch("/restaurant/profile", data, {
+      headers: {
+        Authorization: `${session?.user?.accessToken}`,
+      },
+    });
+
+    if (response.data?.restaurantData) {
+      await unstable_update({
+        user: {
+          restaurant: {
+            ...response.data.restaurantData,
+          },
+        },
+      });
+    }
+
     return response.data;
   } catch (error) {
     handleApiError(error);
