@@ -95,8 +95,6 @@ const LoginForm = () => {
     <AuthCard
       title="Welcome!"
       subtitle="Enter your Credentials to access your account"
-      imageSrc="/images/login/funchef.png"
-      imageAlt="Chef"
     >
       <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
         <Input

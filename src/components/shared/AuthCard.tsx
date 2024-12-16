@@ -2,8 +2,8 @@
 
 import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { ReactNode } from "react";
+import Image from "next/image";
 
 interface AuthCardProps {
   title: string;
@@ -18,14 +18,14 @@ const AuthCard = ({
   subtitle,
   children,
   imageSrc = "/images/login/funchef.png",
-  imageAlt = "Auth Background",
+  imageAlt = "Chef",
 }: AuthCardProps) => {
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background circles */}
-      <div className="absolute -right-[23%] top-1/2 transform -translate-y-1/2 w-[750px] h-[100%] rounded-l-full bg-[#5F0101] opacity-40" />
-      <div className="absolute -right-[18%] top-1/2 transform -translate-y-1/2 w-[600px] h-[88%] rounded-l-full bg-[#5F0101] opacity-30" />
-      <div className="absolute -right-[10%] top-1/2 transform -translate-y-1/2 w-[400px] h-[70%] rounded-l-full bg-[#5F0101]" />
+      <div className="absolute -right-[23%] top-1/2 transform -translate-y-1/2 w-[750px] h-[100vh] rounded-l-full bg-[#5F0101] opacity-40" />
+      <div className="absolute -right-[18%] top-1/2 transform -translate-y-1/2 w-[600px] h-[88vh] rounded-l-full bg-[#5F0101] opacity-30" />
+      <div className="absolute -right-[10%] top-1/2 transform -translate-y-1/2 w-[400px] h-[70vh] rounded-l-full bg-[#5F0101]" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -41,6 +41,10 @@ const AuthCard = ({
             height={200}
             className="object-cover"
             priority
+            unoptimized
+            onError={(e) => {
+              console.error("Image load error:", e);
+            }}
           />
         </div>
         <Card className="w-full max-sm:h-screen max-w-screen-sm px-6 py-4 bg-white/90 backdrop-blur-sm">
