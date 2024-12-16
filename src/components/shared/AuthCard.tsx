@@ -42,9 +42,6 @@ const AuthCard = ({
             className="object-cover"
             priority
             unoptimized
-            onError={(e) => {
-              console.error("Image load error:", e);
-            }}
           />
         </div>
         <Card className="w-full max-sm:h-screen max-w-screen-sm px-6 py-4 bg-white/90 backdrop-blur-sm">
