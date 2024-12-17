@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Input, Textarea, Button } from "@nextui-org/react";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaSpinner } from "react-icons/fa";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,12 +10,13 @@ import { RestaurantData } from "@/types/next-auth";
 import Map from "./Map";
 import { uploadImage } from "@/utils/supabase/storage";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const profileSchema = z.object({
   name: z.string().min(1, "Restaurant name is required"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  motto: z.string().optional(),
   latitude: z.number(),
   longitude: z.number(),
   image: z.string().optional(),
@@ -26,14 +27,17 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 interface ProfileSettingsProps {
   restaurantData: Pick<
     RestaurantData,
-    "name" | "email" | "phone" | "latitude" | "longitude"
+    "name" | "email" | "phone" | "latitude" | "longitude" | "image"
   >;
 }
 
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   restaurantData,
 }) => {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [isUploading, setIsUploading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [position, setPosition] = useState<[number, number]>([
     restaurantData.latitude || 0,
     restaurantData.longitude || 0,
@@ -51,10 +55,9 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       name: restaurantData.name || "",
       email: restaurantData.email || "",
       phone: restaurantData.phone || "",
-      motto: "",
       latitude: restaurantData.latitude || 0,
       longitude: restaurantData.longitude || 0,
-      image: "",
+      image: restaurantData.image || "",
     },
   });
 
@@ -64,45 +67,56 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Use window.Image to avoid conflict with next/image
-      const img = new window.Image();
-      const objectUrl = URL.createObjectURL(file);
+    if (!file || !session?.user?.id) {
+      return;
+    }
 
-      img.onload = async () => {
-        URL.revokeObjectURL(objectUrl);
-
-        if (img.width !== 500 || img.height !== 200) {
-          toast.error("Banner must be 500x200 pixels");
-          return;
+    setIsUploading(true);
+    try {
+      const result = await uploadImage(
+        file,
+        session.user.id,
+        "banners",
+        (progress: number) => {
+          console.log(`Upload progress: ${progress}%`);
         }
+      );
 
-        setIsUploading(true);
-        try {
-          const result = await uploadImage(file);
-          if (result.url) {
-            setValue("image", result.url);
-            toast.success("Banner uploaded successfully");
-          }
-        } catch (error) {
-          toast.error("Failed to upload banner");
-          console.error("Error uploading banner:", error);
-        } finally {
-          setIsUploading(false);
-        }
-      };
-
-      img.src = objectUrl;
+      if (result.error) {
+        toast.error(result.error.message);
+        return;
+      }
+      if (result.url) {
+        setValue("image", result.url);
+        toast.success("Banner uploaded successfully");
+      }
+    } catch (error) {
+      toast.error("Failed to upload banner");
+      console.error("Error uploading banner:", error);
+    } finally {
+      setIsUploading(false);
+      event.target.value = "";
     }
   };
 
   const onSubmit = async (data: ProfileFormData) => {
+    setIsUpdating(true);
     try {
+      if (isUploading) {
+        toast.error("Please wait for the banner to finish uploading");
+        return;
+      }
+
       await updateProfile(data);
       toast.success("Profile updated successfully");
+      router.refresh();
     } catch (error) {
-      toast.error("Failed to update profile");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update profile";
+      toast.error(errorMessage);
       console.error("Error updating profile:", error);
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -130,7 +144,11 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               htmlFor="banner-upload"
               className="absolute bottom-4 right-4 bg-[#5F0101] text-white p-3 rounded-full cursor-pointer hover:bg-[#4a0101] transition-colors z-10"
             >
-              <FaEdit size={20} />
+              {isUploading ? (
+                <FaSpinner className="animate-spin" size={20} />
+              ) : (
+                <FaEdit size={20} />
+              )}
               <input
                 id="banner-upload"
                 type="file"
@@ -154,15 +172,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
               placeholder="Enter restaurant name"
               errorMessage={errors.name?.message}
               className="w-full"
-            />
-          </div>
-
-          <div className="w-full">
-            <Textarea
-              {...register("motto")}
-              label="Motto"
-              placeholder="Enter restaurant motto"
-              errorMessage={errors.motto?.message}
             />
           </div>
 
@@ -199,8 +208,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
             color="primary"
             size="lg"
             className="bg-[#5F0101] text-white"
+            isLoading={isUpdating}
+            disabled={isUpdating}
           >
-            Update Profile
+            {isUpdating ? "Updating..." : "Update Profile"}
           </Button>
         </div>
       </form>

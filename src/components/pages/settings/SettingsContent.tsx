@@ -11,7 +11,7 @@ interface SettingsContentProps {
   section: string;
   restaurantData: Pick<
     RestaurantData,
-    "name" | "email" | "phone" | "latitude" | "longitude"
+    "name" | "email" | "phone" | "latitude" | "longitude" | "image"
   >;
 }
 

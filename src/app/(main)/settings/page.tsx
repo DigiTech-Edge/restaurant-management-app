@@ -17,13 +17,14 @@ export default async function SettingsPage({
 
   const restaurantData: Pick<
     RestaurantData,
-    "name" | "email" | "phone" | "latitude" | "longitude"
+    "name" | "email" | "phone" | "latitude" | "longitude" | "image"
   > = {
     name: session.user.restaurant.name,
     email: session.user.restaurant.email,
     phone: session.user.restaurant.phone,
     latitude: session.user.restaurant.latitude,
     longitude: session.user.restaurant.longitude,
+    image: session.user.restaurant.image,
   };
 
   return (

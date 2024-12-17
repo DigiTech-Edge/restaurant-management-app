@@ -9,6 +9,7 @@ interface RestaurantData {
   email: string;
   phone: string;
   rating: number | null;
+  image: string | null;
   password?: string; // Optional as it will be removed before storing
   token?: string; // Optional as it will be removed before storing
 }
@@ -18,7 +19,7 @@ declare module "next-auth" {
     user: {
       id: string;
       accessToken: string;
-      restaurant: Omit<RestaurantData, 'password' | 'token'>;
+      restaurant: Omit<RestaurantData, "password" | "token">;
     } & DefaultSession["user"];
   }
 
@@ -33,6 +34,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     accessToken: string;
-    restaurant: Omit<RestaurantData, 'password' | 'token'>;
+    restaurant: Omit<RestaurantData, "password" | "token">;
   }
 }

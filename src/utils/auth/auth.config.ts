@@ -30,7 +30,7 @@ export const authConfig = {
 
       return true;
     },
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user, account, profile, trigger, session }) {
       if (account?.provider === "google") {
         try {
           if (!profile?.email || !profile?.sub) {
@@ -67,6 +67,12 @@ export const authConfig = {
         token.restaurant = safeRestaurantData;
         return token;
       }
+
+      // Handle session updates
+      if (trigger === "update" && session?.user?.restaurant) {
+        token.restaurant = session.user.restaurant;
+      }
+
       return token;
     },
     session({ session, token }) {

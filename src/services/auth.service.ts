@@ -59,12 +59,35 @@ export async function authenticateWithGoogle(email: string, googleId: string) {
   }
 }
 
-export async function updatePassword(email: string, password: string) {
+export interface UpdatePasswordData {
+  email: string;
+  oldPassword: string;
+  newPassword: string;
+}
+
+export async function updatePassword(data: UpdatePasswordData) {
   try {
+    const session = await auth();
+    if (!session?.user?.email) {
+      throw new Error("Unauthorized: No user session found");
+    }
+
+    // Validate that the email matches the current user's email
+    if (session.user.email !== data.email) {
+      throw new Error("Email does not match current user");
+    }
+
+    // Password validation
+    if (data.newPassword.length < 8) {
+      throw new Error("New password must be at least 8 characters long");
+    }
+
     const response = await axios.patch("/auth/update-password", {
-      email,
-      password,
+      email: data.email,
+      oldPassword: data.oldPassword,
+      newPassword: data.newPassword,
     });
+
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -81,18 +104,21 @@ export async function updateProfile(
       throw new Error("Unauthorized");
     }
 
-    const response = await axios.patch("/restaurant/profile", data, {
-      headers: {
-        Authorization: `${session?.user?.accessToken}`,
-      },
-    });
+    const response = await axios.patch(
+      `/main/update-restaurant/${session.user.id}`,
+      data,
+      {
+        headers: {
+          Authorization: `${session.user.accessToken}`,
+        },
+      }
+    );
 
-    if (response.data?.restaurantData) {
+    if (response.data?.updatedRestaurant) {
       await unstable_update({
         user: {
-          restaurant: {
-            ...response.data.restaurantData,
-          },
+          ...session.user,
+          restaurant: response.data.updatedRestaurant,
         },
       });
     }
