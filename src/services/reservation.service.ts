@@ -149,7 +149,7 @@ export async function createReservation(data: CreateReservationRequest) {
 
 export async function updateReservation(
   reservationId: string,
-  data: CreateReservationRequest
+  data: UpdateReservationRequest
 ) {
   try {
     const session = await auth();
@@ -157,7 +157,7 @@ export async function updateReservation(
       throw new Error("Unauthorized");
     }
 
-    const response = await axios.put(
+    const response = await axios.patch(
       `/main/update-reservation/${reservationId}`,
       data,
       {
@@ -210,6 +210,29 @@ export async function getReservation(reservationId: string) {
     });
 
     return response.data as ReservationsApiResponse;
+  } catch (error) {
+    handleApiError(error);
+  }
+}
+
+export async function cancelReservation(reservationId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.accessToken) {
+      throw new Error("Unauthorized");
+    }
+
+    const response = await axios.delete(
+      `/main/cancel-reservation/${reservationId}`,
+      {
+        headers: {
+          Authorization: `${session.user.accessToken}`,
+        },
+      }
+    );
+
+    revalidatePath("/reservations");
+    return response.data;
   } catch (error) {
     handleApiError(error);
   }

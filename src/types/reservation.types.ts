@@ -47,7 +47,9 @@ export interface CreateReservationRequest {
 }
 
 export interface UpdateReservationRequest {
-  status: ReservationStatus;
+  name: string;
+  phone: string;
+  numberOfGuests: number;
 }
 
 export interface TablesApiResponse {

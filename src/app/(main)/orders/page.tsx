@@ -12,10 +12,11 @@ const orderStatuses = ["Pending", "Processing", "Completed"];
 export default async function Orders({
   searchParams,
 }: {
-  searchParams: { status?: string };
+  searchParams: Promise<{ status?: string }>;
 }) {
   const orders = await getAllOrders();
-  const status = searchParams.status || "Pending";
+  const resolvedSearchParams = await searchParams;
+  const status = resolvedSearchParams.status || "Pending";
 
   // Helper to format orders for the UI
   const formatOrdersForUI = (orders: FormattedOrder[]) => {

@@ -13,7 +13,10 @@ import {
   createReservation,
   updateReservation,
 } from "@/services/reservation.service";
-import { CreateReservationRequest } from "@/types/reservation.types";
+import {
+  CreateReservationRequest,
+  UpdateReservationRequest,
+} from "@/types/reservation.types";
 import { useReservationStore } from "@/store/useReservationStore";
 
 interface TableData {
@@ -113,7 +116,12 @@ export default function ReservationsClient({
   ) => {
     try {
       if (selectedReservation && "id" in selectedReservation) {
-        await updateReservation(selectedReservation.id, formData);
+        const updateData: UpdateReservationRequest = {
+          name: formData.name,
+          phone: formData.phone,
+          numberOfGuests: formData.numberOfGuests,
+        };
+        await updateReservation(selectedReservation.id, updateData);
       } else {
         await createReservation(formData);
       }
