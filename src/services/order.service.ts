@@ -46,7 +46,7 @@ export async function getAllOrders() {
         hour12: false,
       }),
       tableNumber: order.table?.number.toString() || "N/A",
-      orderNumber: order.id,
+      orderNumber: order.orderNumber,
       orderType:
         order.type === "dine_in"
           ? "Dine In"

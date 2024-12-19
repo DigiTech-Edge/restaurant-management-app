@@ -13,10 +13,11 @@ export function handleApiError(error: unknown): never {
   // Handle error as Response object
   if (typeof error === "object" && error !== null) {
     const errorObj = error as any;
-    
+
     // Try to get the error message from the response structure
     const errorMessage =
       errorObj.response?.data?.error?.message ||
+      errorObj.response?.data ||
       errorObj.response?.data?.message ||
       errorObj.message ||
       "An unexpected error occurred";

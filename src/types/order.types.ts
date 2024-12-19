@@ -27,6 +27,7 @@ export interface Table {
 
 export interface Order {
   id: string;
+  orderNumber: string;
   date: string;
   type: "dine_in" | "takeout" | "delivery";
   status: OrderStatus;

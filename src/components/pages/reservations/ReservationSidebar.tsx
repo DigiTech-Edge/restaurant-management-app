@@ -101,15 +101,21 @@ export function ReservationSidebar({
   ) => {
     if (!reservations.length) return null;
 
+    const isFutureReservation = (reservation: FormattedReservation) => {
+      const reservationDateTime = new Date(reservation.date);
+      const now = new Date();
+      return reservationDateTime > now;
+    };
+
     return (
       <div className="space-y-2">
         <h3 className="font-medium text-sm text-gray-500">{title}</h3>
         <div className="space-y-2">
           {reservations.map((reservation, index) => (
-            <button
+            <div
               key={index}
               onClick={() => onEditReservation(reservation)}
-              className="w-full p-3 text-left bg-white rounded-lg border hover:border-[#5F0101] transition-colors"
+              className="w-full p-3 text-left bg-white rounded-lg border hover:border-[#5F0101] transition-colors cursor-pointer"
             >
               <div className="flex justify-between items-start">
                 <div>
@@ -126,19 +132,21 @@ export function ReservationSidebar({
                   <span className="text-sm text-gray-500">
                     {reservation.time}
                   </span>
-                  <Button
-                    size="sm"
-                    color="danger"
-                    variant="flat"
-                    startContent={<MdCancel />}
-                    onClick={(e) => handleCancelClick(e, reservation.id)}
-                    className="min-w-0 h-auto py-1"
-                  >
-                    Cancel
-                  </Button>
+                  {isFutureReservation(reservation) && (
+                    <Button
+                      size="sm"
+                      color="danger"
+                      variant="flat"
+                      startContent={<MdCancel />}
+                      onClick={(e) => handleCancelClick(e, reservation.id)}
+                      className="min-w-0 h-auto py-1"
+                    >
+                      Cancel
+                    </Button>
+                  )}
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>

@@ -5,7 +5,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Input, Select, SelectItem } from "@nextui-org/react";
 import { IoClose } from "react-icons/io5";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { CreateReservationRequest } from "@/types/reservation.types";
 import { FormattedReservation } from "./ReservationSidebar";
@@ -75,6 +75,8 @@ export function ReservationForm({
   tables,
   selectedReservation,
 }: ReservationFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const getInitialValues = useCallback(() => {
     const now = new Date();
     const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(
@@ -85,13 +87,25 @@ export function ReservationForm({
       const [title, ...nameParts] = selectedReservation.customerName.split(" ");
       const fullName = nameParts.join(" ");
 
-      // Parse the time from the selected reservation
-      const timeMatch = selectedReservation.time.match(/(\d{1,2}):(\d{2})/);
+      // Parse the time from the selected reservation (e.g., "6:35pm")
+      const timeMatch = selectedReservation.time
+        .toLowerCase()
+        .match(/(\d{1,2}):(\d{2})(am|pm)/);
       let formattedTime = currentTime;
 
       if (timeMatch) {
-        const [_, hours, minutes] = timeMatch;
-        formattedTime = `${hours.padStart(2, "0")}:${minutes}`;
+        const [_, hours, minutes, period] = timeMatch;
+        const hour = parseInt(hours);
+
+        // Convert to 24-hour format
+        let militaryHour = hour;
+        if (period === "pm" && hour !== 12) {
+          militaryHour = hour + 12;
+        } else if (period === "am" && hour === 12) {
+          militaryHour = 0;
+        }
+
+        formattedTime = `${String(militaryHour).padStart(2, "0")}:${minutes}`;
       }
 
       return {
@@ -147,6 +161,7 @@ export function ReservationForm({
   }, [isOpen, selectedReservation, reset, getInitialValues]);
 
   const onSubmitForm = async (data: FormData) => {
+    setIsSubmitting(true);
     try {
       const apiData: CreateReservationRequest = {
         name: `${data.title} ${data.fullName}`.trim(),
@@ -160,7 +175,13 @@ export function ReservationForm({
       await onSubmit(apiData);
       onClose?.();
     } catch (error) {
-      toast.error("Failed to save reservation");
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to save reservation");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -323,12 +344,19 @@ export function ReservationForm({
           <Button
             variant="light"
             type="button"
-            onClick={handleClose}
+            onPress={handleClose}
             className="flex-1"
+            disabled={isSubmitting}
           >
             Close
           </Button>
-          <Button type="submit" color="danger" className="flex-1 bg-[#5F0101]">
+          <Button
+            type="submit"
+            color="danger"
+            className="flex-1 bg-[#5F0101]"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
+          >
             Save
           </Button>
         </div>

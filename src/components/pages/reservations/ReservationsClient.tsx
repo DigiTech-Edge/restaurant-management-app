@@ -130,7 +130,10 @@ export default function ReservationsClient({
       setSelectedReservation(null);
       toast.success("Reservation saved successfully");
     } catch (error) {
-      throw error;
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+      throw new Error("Failed to save reservation");
     }
   };
 
