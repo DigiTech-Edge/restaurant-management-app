@@ -184,7 +184,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({
 
   const generateQRValue = () => {
     if (!session?.user?.id) return "";
-    const baseUrl = "https://digitechedge.web.app/menu";
+    const baseUrl = "https://restaurant.digitechedge.org/menu";
     const params = new URLSearchParams({
       orderNumber: orderNumber,
       status: "paid",
