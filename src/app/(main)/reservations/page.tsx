@@ -1,36 +1,21 @@
 import { Suspense } from "react";
-import { getAllTables, getReservations } from "@/services/reservation.service";
-import ReservationsClient from "@/components/pages/reservations/ReservationsClient";
 import PageHeader from "@/components/global/PageHeader";
-import { formatReservationsByTimeSlot } from "@/helpers/reservation";
+import ReservationsClientWrapper from "@/components/pages/reservations/ReservationsClientWrapper";
 
-export default async function ReservationsPage() {
-  const [tablesResponse, reservationsResponse] = await Promise.all([
-    getAllTables(),
-    getReservations(),
-  ]);
+function ReservationsLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center w-full h-[400px] text-gray-500">
+      <p className="text-lg">Loading reservations...</p>
+    </div>
+  );
+}
 
-  const tables = (tablesResponse.tables || []).map((table) => ({
-    id: table.id,
-    capacity: table.capacity,
-    isReserved: table.reservations && table.reservations.length > 0,
-    number: table.number,
-  }));
-
-  // Process all reservations
-  const reservations = reservationsResponse.reservations || [];
-
-  // Format all reservations into morning, afternoon, evening slots
-  const formattedReservations = formatReservationsByTimeSlot(reservations);
-
+export default function ReservationsPage() {
   return (
     <div>
       <PageHeader title="Reservations" />
-      <Suspense fallback={<div>Loading...</div>}>
-        <ReservationsClient
-          tables={tables}
-          reservations={formattedReservations}
-        />
+      <Suspense fallback={<ReservationsLoading />}>
+        <ReservationsClientWrapper />
       </Suspense>
     </div>
   );

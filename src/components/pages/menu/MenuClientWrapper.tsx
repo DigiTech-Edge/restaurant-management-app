@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@nextui-org/react";
 import { FaPlus, FaBoxOpen } from "react-icons/fa";
 import CategoryManagement from "./CategoryManagement";
@@ -8,7 +8,8 @@ import CategoryCard from "./CategoryCard";
 import { useSearchStore } from "@/store/searchStore";
 import MenuItemsTable from "./MenuItemsTable";
 import { Category, MenuItem } from "@/types/menu.types";
-import { updateSearchParams } from "@/services/actions/searchParams.action";
+import { useRouter, useSearchParams } from "next/navigation";
+import useSWR from "swr";
 
 interface CategoryWithQuantity extends Category {
   quantity: number;
@@ -16,38 +17,64 @@ interface CategoryWithQuantity extends Category {
 
 interface MenuClientWrapperProps {
   selectedCategory: string;
-  categories: CategoryWithQuantity[];
-  menuItems: MenuItem[];
 }
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function MenuClientWrapper({
   selectedCategory,
-  categories,
-  menuItems,
 }: MenuClientWrapperProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | undefined>();
   const searchQuery = useSearchStore((state) => state.searchQuery);
 
+  const { data, isLoading } = useSWR("/api/menu", fetcher, {
+    revalidateOnFocus: false,
+    keepPreviousData: true,
+  });
+
+  const categories = data?.categories || [];
+  const menuItems = data?.menuItems || [];
+
+  const handleCategoryChange = (categoryName: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("category", categoryName);
+    router.push(`/menu?${params.toString()}`, { scroll: false });
+  };
+
   // Filter categories based on search query
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCategories = useMemo(() => {
+    return categories.filter((category: CategoryWithQuantity) =>
+      category.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [categories, searchQuery]);
 
   // Filter menu items based on selected category and search query
-  const filteredMenuItems = menuItems.filter((item) => {
-    const matchesCategory = selectedCategory
-      ? categories
-          .find((cat) => cat.id === item.categoryId)
-          ?.name.toLowerCase() === selectedCategory.toLowerCase()
-      : true;
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter((item: MenuItem) => {
+      const matchesCategory = selectedCategory
+        ? categories
+            .find((cat: CategoryWithQuantity) => cat.id === item.categoryId)
+            ?.name.toLowerCase() === selectedCategory.toLowerCase()
+        : true;
 
-    const matchesSearch = searchQuery
-      ? item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      : true;
+      const matchesSearch = searchQuery
+        ? item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
 
-    return matchesCategory && matchesSearch;
-  });
+      return matchesCategory && matchesSearch;
+    });
+  }, [menuItems, categories, selectedCategory, searchQuery]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-[400px] text-gray-500">
+        <p className="text-lg">Loading menu data...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -69,43 +96,42 @@ export default function MenuClientWrapper({
 
       <div className="flex gap-4 my-8 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-[#5F0101] min-h-[150px]">
         {!searchQuery && (
-          <form action={updateSearchParams}>
-            <input type="hidden" name="category" value="" />
-            <input type="hidden" name="_url" value="/menu" />
-            <button type="submit" className="w-full">
-              <CategoryCard
-                name="All"
-                quantity={menuItems.length}
-                color={selectedCategory === "" ? "bg-[#5F0101]" : "bg-gray-700"}
-                delay={0}
-                showEdit={false}
-              />
-            </button>
-          </form>
+          <div
+            onClick={() => handleCategoryChange("")}
+            className="cursor-pointer"
+          >
+            <CategoryCard
+              name="All"
+              quantity={menuItems.length}
+              color={selectedCategory === "" ? "bg-[#5F0101]" : "bg-gray-700"}
+              delay={0}
+              showEdit={false}
+            />
+          </div>
         )}
         {filteredCategories.length > 0 ? (
-          filteredCategories.map((category, index) => (
-            <form key={category.id} action={updateSearchParams}>
-              <input type="hidden" name="category" value={category.name} />
-              <input type="hidden" name="_url" value="/menu" />
-              <button type="submit" className="w-full">
-                <CategoryCard
-                  name={category.name}
-                  quantity={category.quantity}
-                  color={
-                    selectedCategory.toLowerCase() ===
-                    category.name.toLowerCase()
-                      ? "bg-[#5F0101]"
-                      : "bg-gray-700"
-                  }
-                  delay={0.1 * (index + 1)}
-                  onEdit={() => {
-                    setEditingCategory(category.id);
-                    setIsModalOpen(true);
-                  }}
-                />
-              </button>
-            </form>
+          filteredCategories.map((category: any, index: number) => (
+            <div
+              key={category.id}
+              onClick={() => handleCategoryChange(category.name)}
+              className="cursor-pointer"
+            >
+              <CategoryCard
+                name={category.name}
+                quantity={category.quantity}
+                color={
+                  selectedCategory.toLowerCase() === category.name.toLowerCase()
+                    ? "bg-[#5F0101]"
+                    : "bg-gray-700"
+                }
+                delay={0.1 * (index + 1)}
+                onEdit={(e) => {
+                  e.stopPropagation();
+                  setEditingCategory(category.id);
+                  setIsModalOpen(true);
+                }}
+              />
+            </div>
           ))
         ) : (
           <div className="flex flex-col items-center justify-center w-full text-gray-500">
@@ -126,7 +152,7 @@ export default function MenuClientWrapper({
         }}
         editingCategoryId={editingCategory}
         initialCategory={
-          categories.find((cat) => cat.id === editingCategory)?.name
+          categories.find((cat: Category) => cat.id === editingCategory)?.name
         }
       />
     </>
