@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import ReservationsClient from "./ReservationsClient";
+import { Spinner } from "@nextui-org/react";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -15,7 +16,7 @@ export default function ReservationsClientWrapper() {
   if (isLoading && !data) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-[400px] text-gray-500">
-        <p className="text-lg">Loading reservation data...</p>
+        <Spinner size="lg" color="danger" />
       </div>
     );
   }

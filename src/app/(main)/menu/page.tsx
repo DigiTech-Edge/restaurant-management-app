@@ -1,9 +1,13 @@
 import { Suspense } from "react";
 import PageHeaderSearch from "@/components/global/PageHeaderSearch";
 import MenuClientWrapper from "@/components/pages/menu/MenuClientWrapper";
-
+import { Spinner } from "@nextui-org/react";
 function SearchBarFallback() {
-  return <>Loading categories...</>;
+  return (
+    <div className="flex items-center justify-center h-full">
+      <Spinner size="lg" color="danger" />
+    </div>
+  );
 }
 
 interface PageProps {

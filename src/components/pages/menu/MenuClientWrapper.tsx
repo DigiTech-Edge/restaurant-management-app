@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Button } from "@nextui-org/react";
+import { Button, Spinner } from "@nextui-org/react";
 import { FaPlus, FaBoxOpen } from "react-icons/fa";
 import CategoryManagement from "./CategoryManagement";
 import CategoryCard from "./CategoryCard";
@@ -71,10 +71,12 @@ export default function MenuClientWrapper({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-[400px] text-gray-500">
-        <p className="text-lg">Loading menu data...</p>
+        <Spinner size="lg" color="danger" />
       </div>
     );
   }
+
+  const currentCategory = selectedCategory || "";
 
   return (
     <>
@@ -103,36 +105,39 @@ export default function MenuClientWrapper({
             <CategoryCard
               name="All"
               quantity={menuItems.length}
-              color={selectedCategory === "" ? "bg-[#5F0101]" : "bg-gray-700"}
+              color={currentCategory === "" ? "bg-[#5F0101]" : "bg-gray-700"}
               delay={0}
               showEdit={false}
             />
           </div>
         )}
         {filteredCategories.length > 0 ? (
-          filteredCategories.map((category: any, index: number) => (
-            <div
-              key={category.id}
-              onClick={() => handleCategoryChange(category.name)}
-              className="cursor-pointer"
-            >
-              <CategoryCard
-                name={category.name}
-                quantity={category.quantity}
-                color={
-                  selectedCategory.toLowerCase() === category.name.toLowerCase()
-                    ? "bg-[#5F0101]"
-                    : "bg-gray-700"
-                }
-                delay={0.1 * (index + 1)}
-                onEdit={(e) => {
-                  e.stopPropagation();
-                  setEditingCategory(category.id);
-                  setIsModalOpen(true);
-                }}
-              />
-            </div>
-          ))
+          filteredCategories.map(
+            (category: CategoryWithQuantity, index: number) => (
+              <div
+                key={category.id}
+                onClick={() => handleCategoryChange(category.name)}
+                className="cursor-pointer"
+              >
+                <CategoryCard
+                  name={category.name}
+                  quantity={category.quantity}
+                  color={
+                    currentCategory.toLowerCase() ===
+                    category.name.toLowerCase()
+                      ? "bg-[#5F0101]"
+                      : "bg-gray-700"
+                  }
+                  delay={0.1 * (index + 1)}
+                  onEdit={(e) => {
+                    e.stopPropagation();
+                    setEditingCategory(category.id);
+                    setIsModalOpen(true);
+                  }}
+                />
+              </div>
+            )
+          )
         ) : (
           <div className="flex flex-col items-center justify-center w-full text-gray-500">
             <FaBoxOpen size={40} className="mb-4 text-gray-400" />
@@ -152,7 +157,9 @@ export default function MenuClientWrapper({
         }}
         editingCategoryId={editingCategory}
         initialCategory={
-          categories.find((cat: Category) => cat.id === editingCategory)?.name
+          categories.find(
+            (cat: CategoryWithQuantity) => cat.id === editingCategory
+          )?.name
         }
       />
     </>
