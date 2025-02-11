@@ -99,7 +99,7 @@ export const QRCodeDocument = ({
       <View style={styles.instructions}>
         <Text style={styles.instructionTitle}>How to Use This QR Code:</Text>
         <Text style={styles.instructionText}>
-          1. Open your smartphone's camera
+          1. Open your smartphone&apos;s camera
         </Text>
         <Text style={styles.instructionText}>
           2. Point it at the QR code above
