@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button, Spinner } from "@nextui-org/react";
 import { FaPlus, FaBoxOpen } from "react-icons/fa";
 import CategoryManagement from "./CategoryManagement";
@@ -10,6 +10,7 @@ import MenuItemsTable from "./MenuItemsTable";
 import { Category, MenuItem } from "@/types/menu.types";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
+import { mutate } from "swr";
 
 interface CategoryWithQuantity extends Category {
   quantity: number;
@@ -19,7 +20,13 @@ interface MenuClientWrapperProps {
   selectedCategory: string;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch menu data");
+  }
+  return res.json();
+};
 
 export default function MenuClientWrapper({
   selectedCategory,
@@ -30,10 +37,16 @@ export default function MenuClientWrapper({
   const [editingCategory, setEditingCategory] = useState<string | undefined>();
   const searchQuery = useSearchStore((state) => state.searchQuery);
 
-  const { data, isLoading } = useSWR("/api/menu", fetcher, {
-    revalidateOnFocus: false,
-    keepPreviousData: true,
+  const { data, isLoading, error } = useSWR("/api/menu", fetcher, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    refreshInterval: 5000, // Poll every 5 seconds
+    dedupingInterval: 2000, // Dedupe requests within 2 seconds
+    shouldRetryOnError: true,
+    errorRetryCount: 3,
   });
+
+  // Force revalidate when modal closes (after category operations)
 
   const categories = data?.categories || [];
   const menuItems = data?.menuItems || [];
@@ -46,22 +59,26 @@ export default function MenuClientWrapper({
 
   // Filter categories based on search query
   const filteredCategories = useMemo(() => {
+    if (!Array.isArray(categories)) return [];
     return categories.filter((category: CategoryWithQuantity) =>
-      category.name.toLowerCase().includes(searchQuery.toLowerCase())
+      category?.name?.toLowerCase().includes(searchQuery?.toLowerCase() || "")
     );
   }, [categories, searchQuery]);
 
   // Filter menu items based on selected category and search query
   const filteredMenuItems = useMemo(() => {
+    if (!Array.isArray(menuItems)) return [];
     return menuItems.filter((item: MenuItem) => {
+      if (!item) return false;
+
       const matchesCategory = selectedCategory
         ? categories
-            .find((cat: CategoryWithQuantity) => cat.id === item.categoryId)
-            ?.name.toLowerCase() === selectedCategory.toLowerCase()
+            .find((cat: CategoryWithQuantity) => cat?.id === item?.categoryId)
+            ?.name?.toLowerCase() === selectedCategory?.toLowerCase()
         : true;
 
       const matchesSearch = searchQuery
-        ? item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ? item?.name?.toLowerCase().includes(searchQuery?.toLowerCase() || "")
         : true;
 
       return matchesCategory && matchesSearch;

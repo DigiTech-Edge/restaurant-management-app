@@ -68,13 +68,19 @@ export interface FormattedOrderItem {
 }
 
 export interface FormattedOrder {
-  orders: FormattedOrderItem[];
+  id: string;
+  orders: {
+    name: string;
+    quantity: number;
+    description: string;
+    price: number;
+  }[];
   orderTime: string;
   tableNumber: string;
   orderNumber: string;
-  paymentMethod: string;
   orderType: string;
-  status: OrderStatus;
+  status: string;
+  paymentMethod: string;
 }
 
 export interface InvoiceModalProps {

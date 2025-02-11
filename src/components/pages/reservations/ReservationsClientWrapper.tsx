@@ -8,7 +8,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function ReservationsClientWrapper() {
   const { data, isLoading } = useSWR("/api/reservations", fetcher, {
-    refreshInterval: 30000, // Poll every 30 seconds
+    refreshInterval: 5000, // Poll every 30 seconds
     revalidateOnFocus: false, // Prevent revalidation on tab focus
     keepPreviousData: true, // Keep showing old data while fetching new data
   });

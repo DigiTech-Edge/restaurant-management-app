@@ -32,6 +32,7 @@ export async function getAllOrders() {
 
     // Format orders to match the UI structure
     const formattedOrders: FormattedOrder[] = data.orders.map((order) => ({
+      id: order.id,
       orders: order.menuItems.map((item) => ({
         name: item.name,
         quantity:

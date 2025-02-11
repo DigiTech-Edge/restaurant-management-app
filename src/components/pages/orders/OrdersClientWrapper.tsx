@@ -18,7 +18,7 @@ export default function OrdersClientWrapper() {
   const searchParams = useSearchParams();
   const status = searchParams?.get("status") || "Pending";
 
-  const { data: orders = [], isLoading } = useSWR<FormattedOrder[]>(
+  const { data: rawOrders = [], isLoading } = useSWR<FormattedOrder[]>(
     "/api/orders",
     fetcher,
     {
@@ -34,9 +34,12 @@ export default function OrdersClientWrapper() {
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
-  // Helper to format orders for the UI
-  const formatOrdersForUI = (orders: FormattedOrder[]) => {
-    return orders.map((order) => ({
+  // Format and memoize the orders
+  const orders = useMemo(() => {
+    if (!Array.isArray(rawOrders)) return [];
+
+    return rawOrders.map((order) => ({
+      id: order.id,
       orders: order.orders.map((item) => ({
         ...item,
         description: item.description,
@@ -48,29 +51,36 @@ export default function OrdersClientWrapper() {
       status: order.status,
       paymentMethod: order.paymentMethod,
     }));
-  };
+  }, [rawOrders]);
 
   // Memoize order counts to prevent unnecessary recalculations
   const orderCounts = useMemo(() => {
+    if (!Array.isArray(orders))
+      return { pending: 0, processing: 0, completed: 0 };
+
     const counts = {
-      pending: orders.filter(
-        (order: FormattedOrder) => order.status === ORDER_STATUS.PENDING
-      ).length,
+      pending: orders.filter((order) => order?.status === ORDER_STATUS.PENDING)
+        .length,
       processing: orders.filter(
-        (order: FormattedOrder) => order.status === ORDER_STATUS.PROCESSING
+        (order) => order?.status === ORDER_STATUS.PROCESSING
       ).length,
       completed: orders.filter(
-        (order: FormattedOrder) =>
-          order.status === ORDER_STATUS.COMPLETED ||
-          order.status === ORDER_STATUS.PAID
+        (order) =>
+          order?.status === ORDER_STATUS.COMPLETED ||
+          order?.status === ORDER_STATUS.PAID
       ).length,
     };
     return counts;
   }, [orders]);
 
-  // Memoize filtered orders to prevent unnecessary recalculations
+  // Filter orders based on selected status
   const filteredOrders = useMemo(() => {
-    const filtered = orders.filter((order: FormattedOrder) => {
+    if (!Array.isArray(orders)) return [];
+    if (!status) return [];
+
+    return orders.filter((order) => {
+      if (!order?.status) return false;
+
       switch (status.toLowerCase()) {
         case "pending":
           return order.status === ORDER_STATUS.PENDING;
@@ -85,7 +95,6 @@ export default function OrdersClientWrapper() {
           return false;
       }
     });
-    return formatOrdersForUI(filtered);
   }, [orders, status]);
 
   const NoOrdersMessage = () => (
@@ -135,6 +144,7 @@ export default function OrdersClientWrapper() {
                 <OrderCard
                   key={order.orderNumber}
                   {...order}
+                  orderId={order.id}
                   delay={index * 0.2}
                   backgroundColor="#F3F4F6"
                 />
@@ -144,6 +154,7 @@ export default function OrdersClientWrapper() {
                 <OrderCard
                   key={order.orderNumber}
                   {...order}
+                  orderId={order.id}
                   delay={index * 0.2}
                   backgroundColor="#F6D0D0"
                 />
@@ -152,7 +163,12 @@ export default function OrdersClientWrapper() {
               filteredOrders.map((order, index) => (
                 <CompletedCard
                   key={order.orderNumber}
-                  {...order}
+                  orders={order.orders}
+                  orderTime={order.orderTime}
+                  tableNumber={order.tableNumber}
+                  orderNumber={order.orderNumber}
+                  orderType={order.orderType}
+                  paymentMethod={order.paymentMethod}
                   delay={index * 0.2}
                   isPaid={order.status === ORDER_STATUS.PAID}
                 />

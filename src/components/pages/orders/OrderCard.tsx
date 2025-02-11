@@ -27,6 +27,7 @@ interface OrderCardProps {
   orderTime: string;
   tableNumber: string;
   orderNumber: string;
+  orderId: string;
   paymentMethod: string;
   orderType: string;
   status: string;
@@ -39,6 +40,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
   orderTime,
   tableNumber,
   orderNumber,
+  orderId,
   paymentMethod,
   orderType,
   status,
@@ -59,7 +61,7 @@ const OrderCard: React.FC<OrderCardProps> = ({
           ? ORDER_STATUS.PROCESSING
           : ORDER_STATUS.COMPLETED;
 
-      await updateOrderStatus(orderNumber, newStatus);
+      await updateOrderStatus(orderId, newStatus);
 
       toast.success("Status updated successfully");
     } catch (error) {

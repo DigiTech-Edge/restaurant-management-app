@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import PageHeaderSearch from "@/components/global/PageHeaderSearch";
 import MenuClientWrapper from "@/components/pages/menu/MenuClientWrapper";
 import { Spinner } from "@nextui-org/react";
+
 function SearchBarFallback() {
   return (
     <div className="flex items-center justify-center h-full">

@@ -50,18 +50,39 @@ export default function ReservationsClient({
 
   // Initialize filtered reservations with current date's reservations
   const getFilteredReservations = (date: Date) => ({
-    morning: reservations.morning.filter((res) => {
-      const resDate = new Date(res.date);
-      return resDate.toDateString() === date.toDateString();
-    }),
-    afternoon: reservations.afternoon.filter((res) => {
-      const resDate = new Date(res.date);
-      return resDate.toDateString() === date.toDateString();
-    }),
-    evening: reservations.evening.filter((res) => {
-      const resDate = new Date(res.date);
-      return resDate.toDateString() === date.toDateString();
-    }),
+    morning: Array.isArray(reservations?.morning)
+      ? reservations.morning.filter((res) => {
+          if (!res?.date) return false;
+          const resDate = new Date(res.date);
+          return (
+            resDate instanceof Date &&
+            !isNaN(resDate.getTime()) &&
+            resDate.toDateString() === date.toDateString()
+          );
+        })
+      : [],
+    afternoon: Array.isArray(reservations?.afternoon)
+      ? reservations.afternoon.filter((res) => {
+          if (!res?.date) return false;
+          const resDate = new Date(res.date);
+          return (
+            resDate instanceof Date &&
+            !isNaN(resDate.getTime()) &&
+            resDate.toDateString() === date.toDateString()
+          );
+        })
+      : [],
+    evening: Array.isArray(reservations?.evening)
+      ? reservations.evening.filter((res) => {
+          if (!res?.date) return false;
+          const resDate = new Date(res.date);
+          return (
+            resDate instanceof Date &&
+            !isNaN(resDate.getTime()) &&
+            resDate.toDateString() === date.toDateString()
+          );
+        })
+      : [],
   });
 
   const [filteredReservations, setFilteredReservations] = useState(
@@ -75,19 +96,27 @@ export default function ReservationsClient({
 
   // Get all reservations for the selected date
   const allCurrentReservations = [
-    ...filteredReservations.morning,
-    ...filteredReservations.afternoon,
-    ...filteredReservations.evening,
+    ...(Array.isArray(filteredReservations?.morning)
+      ? filteredReservations.morning
+      : []),
+    ...(Array.isArray(filteredReservations?.afternoon)
+      ? filteredReservations.afternoon
+      : []),
+    ...(Array.isArray(filteredReservations?.evening)
+      ? filteredReservations.evening
+      : []),
   ];
 
   // Check if a table is reserved for the selected date
   const isTableReserved = (tableId: string) => {
-    return allCurrentReservations.some((res) => res.tableId === tableId);
+    if (!tableId || !Array.isArray(allCurrentReservations)) return false;
+    return allCurrentReservations.some((res) => res?.tableId === tableId);
   };
 
   // Get reservation for a table on the selected date
   const getTableReservation = (tableId: string) => {
-    return allCurrentReservations.find((res) => res.tableId === tableId);
+    if (!tableId || !Array.isArray(allCurrentReservations)) return undefined;
+    return allCurrentReservations.find((res) => res?.tableId === tableId);
   };
 
   const handleTableClick = (tableId: string) => {
