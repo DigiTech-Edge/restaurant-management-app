@@ -495,9 +495,9 @@ export default function TableManagement({
                             level="H"
                             includeMargin
                           />
-                          <p className="text-sm text-gray-500 text-center break-all">
+                          {/* <p className="text-sm text-gray-500 text-center break-all">
                             {generateQRValue(selectedTable)}
-                          </p>
+                          </p> */}
                           <Button
                             color="primary"
                             className="bg-[#5F0101]"
