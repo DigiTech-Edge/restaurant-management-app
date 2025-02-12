@@ -414,7 +414,7 @@ export default function TableManagement({
                   className="w-full"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-[calc(100vh-300px)]">
-                    <div className="overflow-y-auto pr-4">
+                    <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-[#5F0101] pr-4">
                       <h3 className="text-lg font-semibold mb-2 sticky top-0 bg-white z-10">
                         Tables
                       </h3>
@@ -482,8 +482,10 @@ export default function TableManagement({
                         )}
                       </div>
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">QR Code</h3>
+                    <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-[#5F0101] pr-4">
+                      <h3 className="text-lg font-semibold mb-2 sticky top-0 bg-white z-10">
+                        QR Code
+                      </h3>
                       {selectedTable ? (
                         <div className="flex flex-col items-center gap-4">
                           <QRCodeCanvas

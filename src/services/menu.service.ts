@@ -185,6 +185,8 @@ export async function getAllMenuItems(): Promise<MenuItem[]> {
       throw new Error("Unauthorized");
     }
 
+    // console.log(session.user.accessToken, session.user.id);
+
     const response = await axios.get(
       `/main/get-all-menu-items/${session.user.id}`,
       {

@@ -8,25 +8,30 @@ import { ORDER_STATUS } from "@/lib/constants";
 import { FormattedOrder } from "@/types/order.types";
 import { FaClipboardList } from "react-icons/fa";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Spinner } from "@nextui-org/react";
+import { getAllOrders } from "@/services/order.service";
+import toast from "react-hot-toast";
 
 const orderStatuses = ["Pending", "Processing", "Completed"];
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function OrdersClientWrapper() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const status = searchParams?.get("status") || "Pending";
 
-  const { data: rawOrders = [], isLoading } = useSWR<FormattedOrder[]>(
-    "/api/orders",
-    fetcher,
-    {
-      refreshInterval: 5000, // Poll every 5 seconds
-      revalidateOnFocus: false, // Prevent revalidation on tab focus
-      keepPreviousData: true, // Keep showing old data while fetching new data
-    }
-  );
+  const {
+    data: rawOrders = [],
+    isLoading,
+    error,
+  } = useSWR<FormattedOrder[]>("/api/orders", getAllOrders, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+    shouldRetryOnError: false,
+    keepPreviousData: true,
+    onError: (err) => {
+      toast.error(err.message);
+    },
+  });
 
   const handleStatusChange = (newStatus: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -99,10 +104,14 @@ export default function OrdersClientWrapper() {
 
   const NoOrdersMessage = () => (
     <div className="w-full flex flex-col items-center justify-center p-8 text-gray-500">
-      <FaClipboardList size={48} className="mb-4" />
-      <p className="text-lg font-semibold">
-        {isLoading && !orders.length ? "Loading orders..." : "No orders found"}
-      </p>
+      {isLoading && !orders.length ? (
+        <Spinner size="lg" color="danger" />
+      ) : (
+        <>
+          <FaClipboardList size={48} className="mb-4" />
+          <p className="text-lg font-semibold">No orders found</p>
+        </>
+      )}
     </div>
   );
 

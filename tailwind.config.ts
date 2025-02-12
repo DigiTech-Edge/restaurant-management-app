@@ -23,6 +23,16 @@ const config: Config = {
       layout: {
         dividerWeight: "2px",
       },
+      themes: {
+        light: {
+          colors: {
+            danger: {
+              DEFAULT: "#5F0101",
+              foreground: "#FFFFFF",
+            },
+          },
+        },
+      },
     }),
     require("tailwindcss-animate"),
     require("tailwind-scrollbar"),

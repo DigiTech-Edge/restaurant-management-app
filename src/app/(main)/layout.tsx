@@ -7,10 +7,12 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex">
+    <main className="flex h-screen">
       <SessionProvider>
         <Sidebar />
-        <div className="flex-1 p-4 pt-16 md:pt-4 overflow-auto">{children}</div>
+        <div className="flex-1 p-4 pt-16 md:pt-4 overflow-y-auto">
+          {children}
+        </div>
       </SessionProvider>
     </main>
   );

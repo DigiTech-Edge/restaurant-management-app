@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button, Spinner } from "@nextui-org/react";
 import { FaPlus, FaBoxOpen } from "react-icons/fa";
 import CategoryManagement from "./CategoryManagement";
@@ -10,7 +10,8 @@ import MenuItemsTable from "./MenuItemsTable";
 import { Category, MenuItem } from "@/types/menu.types";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
-import { mutate } from "swr";
+import { getAllCategories, getAllMenuItems } from "@/services/menu.service";
+import toast from "react-hot-toast";
 
 interface CategoryWithQuantity extends Category {
   quantity: number;
@@ -20,12 +21,20 @@ interface MenuClientWrapperProps {
   selectedCategory: string;
 }
 
-const fetcher = async (url: string) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error("Failed to fetch menu data");
-  }
-  return res.json();
+const fetchMenuData = async () => {
+  const [categories, menuItems] = await Promise.all([
+    getAllCategories(),
+    getAllMenuItems(),
+  ]);
+
+  // Transform categories to include quantity
+  const categoriesWithQuantity = categories.map((category) => ({
+    ...category,
+    quantity: menuItems.filter((item) => item.categoryId === category.id)
+      .length,
+  }));
+
+  return { categories: categoriesWithQuantity, menuItems };
 };
 
 export default function MenuClientWrapper({
@@ -37,16 +46,15 @@ export default function MenuClientWrapper({
   const [editingCategory, setEditingCategory] = useState<string | undefined>();
   const searchQuery = useSearchStore((state) => state.searchQuery);
 
-  const { data, isLoading, error } = useSWR("/api/menu", fetcher, {
+  const { data, isLoading, error } = useSWR("menu-data", fetchMenuData, {
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
-    refreshInterval: 5000, // Poll every 5 seconds
-    dedupingInterval: 2000, // Dedupe requests within 2 seconds
-    shouldRetryOnError: true,
-    errorRetryCount: 3,
+    shouldRetryOnError: false,
+    keepPreviousData: true,
+    onError: (err) => {
+      toast.error(err.message);
+    },
   });
-
-  // Force revalidate when modal closes (after category operations)
 
   const categories = data?.categories || [];
   const menuItems = data?.menuItems || [];

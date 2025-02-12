@@ -1,7 +1,17 @@
+import { Suspense } from "react";
 import PageHeader from "@/components/global/PageHeader";
 import SettingsContent from "@/components/pages/settings/SettingsContent";
 import { auth } from "@/utils/auth/auth";
 import { RestaurantData } from "@/types/next-auth";
+import { Spinner } from "@nextui-org/react";
+
+function SettingsLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center w-full h-[400px] text-gray-500">
+      <Spinner size="lg" color="danger" />
+    </div>
+  );
+}
 
 export default async function SettingsPage({
   searchParams,
@@ -19,21 +29,23 @@ export default async function SettingsPage({
     RestaurantData,
     "name" | "email" | "phone" | "latitude" | "longitude" | "image"
   > = {
-    name: session.user.restaurant.name,
-    email: session.user.restaurant.email,
-    phone: session.user.restaurant.phone,
-    latitude: session.user.restaurant.latitude,
-    longitude: session.user.restaurant.longitude,
-    image: session.user.restaurant.image,
+    name: session.user.restaurant.name || "",
+    email: session.user.restaurant.email || "",
+    phone: session.user.restaurant.phone || "",
+    latitude: session.user.restaurant.latitude || 0,
+    longitude: session.user.restaurant.longitude || 0,
+    image: session.user.restaurant.image || "",
   };
 
   return (
     <>
       <PageHeader title="Settings" showDate={false} />
-      <SettingsContent
-        section={resolvedSearchParams.section || "profile"}
-        restaurantData={restaurantData}
-      />
+      <Suspense fallback={<SettingsLoading />}>
+        <SettingsContent
+          section={resolvedSearchParams.section || "profile"}
+          restaurantData={restaurantData}
+        />
+      </Suspense>
     </>
   );
 }

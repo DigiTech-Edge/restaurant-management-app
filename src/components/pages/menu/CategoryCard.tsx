@@ -28,26 +28,30 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay }}
-      className={`relative group p-4 rounded-lg min-w-[150px] ${color} text-white hover:bg-opacity-90 transition-colors`}
+      className={`relative group p-4 rounded-lg min-w-[150px] h-[120px] ${color} text-white hover:bg-opacity-90 transition-colors`}
     >
-      <div className="flex flex-col items-center gap-2">
-        <h3 className="text-lg font-semibold">{name}</h3>
-        <p className="text-sm opacity-80">{quantity} items</p>
-        {showEdit && onEdit && (
-          <Button
-            isIconOnly
-            size="sm"
-            variant="light"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-white"
-            onClick={(e) => {
-              e.preventDefault();
-              onEdit(e);
-            }}
-          >
-            <FaEdit />
-          </Button>
-        )}
+      <div className="flex flex-col h-full">
+        <h3 className="text-md font-semibold line-clamp-2 text-center mb-2">
+          {name}
+        </h3>
+        <p className="text-sm opacity-80 text-center mt-auto">
+          {quantity} items
+        </p>
       </div>
+      {showEdit && onEdit && (
+        <Button
+          isIconOnly
+          size="sm"
+          variant="light"
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-white"
+          onClick={(e) => {
+            e.preventDefault();
+            onEdit(e);
+          }}
+        >
+          <FaEdit />
+        </Button>
+      )}
     </motion.div>
   );
 };

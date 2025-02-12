@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Modal,
   ModalContent,
@@ -51,6 +51,12 @@ export default function CategoryManagement({
       name: initialCategory || "",
     },
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      reset({ name: initialCategory || "" });
+    }
+  }, [isOpen, initialCategory, reset]);
 
   const onSubmit = async (data: { name: string }) => {
     setIsLoading(true);

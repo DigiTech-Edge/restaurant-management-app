@@ -23,20 +23,19 @@ const api = ky.create({
     ],
     afterResponse: [
       async (_request, _options, response) => {
-        // You can add any response interceptors here
         if (!response.ok) {
-          // Try to get detailed error message from response
-          try {
-            const errorData = await response.clone().json();
-            throw new Error(
-              `Server Error (${response.status}): ${
-                errorData.message || JSON.stringify(errorData)
-              }`
-            );
-          } catch {
-            // If can't parse JSON, throw basic error
-            throw new Error(`HTTP Error: ${response.status}`);
-          }
+          const errorData = await response.clone().json();
+          const error = new Error(
+            errorData.error?.message ||
+              errorData.message ||
+              "An unexpected error occurred"
+          );
+          error.name = "ApiError";
+          (error as any).response = {
+            data: errorData.error.message,
+            status: response.status,
+          };
+          throw error;
         }
       },
     ],
@@ -48,8 +47,13 @@ const removeLeadingSlash = (url: string) => url.replace(/^\/+/, "");
 
 // Helper to wrap response in axios-like format
 const wrapResponse = async (promise: Promise<any>): Promise<{ data: any }> => {
-  const data = await promise;
-  return { data };
+  try {
+    const data = await promise;
+    return { data };
+  } catch (error: any) {
+    // Don't wrap or modify the error, just propagate it
+    throw error;
+  }
 };
 
 const axios = {

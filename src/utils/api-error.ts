@@ -1,31 +1,23 @@
 import { AxiosError } from "axios";
 
 export class ApiError extends Error {
-  constructor(message: string) {
+  status?: number;
+
+  constructor(message: string, status?: number) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
   }
 }
 
 export function handleApiError(error: unknown): never {
   console.log("Error object:", error);
 
-  // Handle error as Response object
   if (typeof error === "object" && error !== null) {
     const errorObj = error as any;
-
-    // Try to get the error message from the response structure
-    const errorMessage =
-      errorObj.response?.data?.error?.message ||
-      errorObj.response?.data ||
-      errorObj.response?.data?.message ||
-      errorObj.message ||
-      "An unexpected error occurred";
-
-    throw new ApiError(errorMessage);
+    throw new ApiError(errorObj.message, errorObj.status);
   }
 
-  // Fallback for other error types
   if (error instanceof Error) {
     throw new ApiError(error.message);
   }

@@ -99,7 +99,7 @@ const Sidebar = () => {
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
+      <div className="md:hidden fixed top-0 left-4 z-50 py-4 bg-white w-full">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className="text-[#5F0101]"

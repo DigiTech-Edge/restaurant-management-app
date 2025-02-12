@@ -3,15 +3,47 @@
 import useSWR from "swr";
 import ReservationsClient from "./ReservationsClient";
 import { Spinner } from "@nextui-org/react";
+import { getAllTables, getReservations } from "@/services/reservation.service";
+import { formatReservationsByTimeSlot } from "@/helpers/reservation";
+import toast from "react-hot-toast";
+import { Table, Reservation } from "@/types/reservation.types";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetchReservationData = async () => {
+  const [tablesResponse, reservationsResponse] = await Promise.all([
+    getAllTables(),
+    getReservations(),
+  ]);
+
+  const tables = tablesResponse.tables || [];
+  const reservations = reservationsResponse.reservations || [];
+
+  const formattedReservations = formatReservationsByTimeSlot(reservations);
+
+  return {
+    tables: tables.map((table: Table) => ({
+      id: table.id,
+      capacity: table.capacity,
+      isReserved: table.reservations && table.reservations.length > 0,
+      number: table.number,
+    })),
+    reservations: formattedReservations,
+  };
+};
 
 export default function ReservationsClientWrapper() {
-  const { data, isLoading } = useSWR("/api/reservations", fetcher, {
-    refreshInterval: 5000, // Poll every 30 seconds
-    revalidateOnFocus: false, // Prevent revalidation on tab focus
-    keepPreviousData: true, // Keep showing old data while fetching new data
-  });
+  const { data, isLoading, error } = useSWR(
+    "reservation-data",
+    fetchReservationData,
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      shouldRetryOnError: false,
+      keepPreviousData: true,
+      onError: (err) => {
+        toast.error(err.message);
+      },
+    }
+  );
 
   if (isLoading && !data) {
     return (
@@ -24,7 +56,9 @@ export default function ReservationsClientWrapper() {
   return (
     <ReservationsClient
       tables={data?.tables || []}
-      reservations={data?.reservations || []}
+      reservations={
+        data?.reservations || { morning: [], afternoon: [], evening: [] }
+      }
     />
   );
 }

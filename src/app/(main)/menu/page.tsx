@@ -19,7 +19,7 @@ export default async function Menu({ searchParams }: PageProps) {
   const { category } = await searchParams;
 
   return (
-    <div className="p-6">
+    <div>
       <Suspense fallback={<SearchBarFallback />}>
         <PageHeaderSearch title="Menu" />
       </Suspense>
