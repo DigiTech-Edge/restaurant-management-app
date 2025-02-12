@@ -90,9 +90,9 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         setValue("image", result.url);
         toast.success("Banner uploaded successfully");
       }
-    } catch (error) {
-      toast.error("Failed to upload banner");
-      console.error("Error uploading banner:", error);
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to upload banner";
+      toast.error(errorMessage);
     } finally {
       setIsUploading(false);
       event.target.value = "";
@@ -110,11 +110,9 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       await updateProfile(data);
       toast.success("Profile updated successfully");
       router.refresh();
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to update profile";
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to update profile";
       toast.error(errorMessage);
-      console.error("Error updating profile:", error);
     } finally {
       setIsUpdating(false);
     }

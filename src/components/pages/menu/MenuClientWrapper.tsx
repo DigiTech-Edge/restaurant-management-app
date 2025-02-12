@@ -9,7 +9,7 @@ import { useSearchStore } from "@/store/searchStore";
 import MenuItemsTable from "./MenuItemsTable";
 import { Category, MenuItem } from "@/types/menu.types";
 import { useRouter, useSearchParams } from "next/navigation";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { getAllCategories, getAllMenuItems } from "@/services/menu.service";
 import toast from "react-hot-toast";
 
@@ -63,6 +63,13 @@ export default function MenuClientWrapper({
     const params = new URLSearchParams(searchParams.toString());
     params.set("category", categoryName);
     router.push(`/menu?${params.toString()}`, { scroll: false });
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingCategory(undefined);
+    // Trigger a revalidation of the data
+    mutate("menu-data");
   };
 
   // Filter categories based on search query
@@ -172,19 +179,18 @@ export default function MenuClientWrapper({
         )}
       </div>
 
-      <MenuItemsTable menuItems={filteredMenuItems} categories={categories} />
+      <MenuItemsTable
+        menuItems={filteredMenuItems}
+        categories={categories}
+        onDataChange={() => mutate("menu-data")}
+      />
 
       <CategoryManagement
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingCategory(undefined);
-        }}
+        onClose={handleModalClose}
         editingCategoryId={editingCategory}
         initialCategory={
-          categories.find(
-            (cat: CategoryWithQuantity) => cat.id === editingCategory
-          )?.name
+          data?.categories.find((cat) => cat.id === editingCategory)?.name
         }
       />
     </>

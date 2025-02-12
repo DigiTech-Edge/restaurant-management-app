@@ -29,11 +29,13 @@ const columns = [
 interface MenuItemsTableProps {
   menuItems: MenuItem[];
   categories: Category[];
+  onDataChange: () => void;
 }
 
 export default function MenuItemsTable({
   menuItems,
   categories,
+  onDataChange,
 }: MenuItemsTableProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | undefined>();
@@ -61,18 +63,25 @@ export default function MenuItemsTable({
     setIsDeleteModalOpen(true);
   };
 
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditingItem(undefined);
+    onDataChange();
+  };
+
   const handleDeleteConfirm = async () => {
     if (!itemToDelete) return;
     setIsLoading(true);
     try {
       await deleteMenuItem(itemToDelete.id);
       toast.success("Menu item deleted successfully");
+      onDataChange();
+      setItemToDelete(undefined);
     } catch (error) {
       toast.error("Failed to delete menu item");
     } finally {
       setIsLoading(false);
       setIsDeleteModalOpen(false);
-      setItemToDelete(undefined);
     }
   };
 
@@ -171,13 +180,10 @@ export default function MenuItemsTable({
 
       <MenuItemModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleModalClose}
         editingItem={editingItem}
         categories={categories}
-        onSuccess={() => {
-          setIsModalOpen(false);
-          setEditingItem(undefined);
-        }}
+        onSuccess={handleModalClose}
       />
 
       <DeleteConfirmationModal

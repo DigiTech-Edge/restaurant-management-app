@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
+import { mutate } from "swr";
 import { FloorPlan } from "./FloorPlan";
 import { ReservationHeader } from "./ReservationHeader";
 import {
@@ -157,12 +158,12 @@ export default function ReservationsClient({
 
       setIsFormOpen(false);
       setSelectedReservation(null);
+      mutate("reservation-data");
       toast.success("Reservation saved successfully");
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(error.message);
-      }
-      throw new Error("Failed to save reservation");
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to save reservation";
+      toast.error(errorMessage);
+      throw error;
     }
   };
 

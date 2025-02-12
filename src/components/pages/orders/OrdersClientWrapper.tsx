@@ -20,10 +20,10 @@ export default function OrdersClientWrapper() {
   const status = searchParams?.get("status") || "Pending";
 
   const {
-    data: rawOrders = [],
+    data: orders = [],
     isLoading,
     error,
-  } = useSWR<FormattedOrder[]>("/api/orders", getAllOrders, {
+  } = useSWR<FormattedOrder[]>("orders-data", getAllOrders, {
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
     shouldRetryOnError: false,
@@ -38,45 +38,6 @@ export default function OrdersClientWrapper() {
     params.set("status", newStatus);
     router.push(`?${params.toString()}`, { scroll: false });
   };
-
-  // Format and memoize the orders
-  const orders = useMemo(() => {
-    if (!Array.isArray(rawOrders)) return [];
-
-    return rawOrders.map((order) => ({
-      id: order.id,
-      orders: order.orders.map((item) => ({
-        ...item,
-        description: item.description,
-      })),
-      orderTime: order.orderTime,
-      tableNumber: order.tableNumber,
-      orderNumber: order.orderNumber,
-      orderType: order.orderType,
-      status: order.status,
-      paymentMethod: order.paymentMethod,
-    }));
-  }, [rawOrders]);
-
-  // Memoize order counts to prevent unnecessary recalculations
-  const orderCounts = useMemo(() => {
-    if (!Array.isArray(orders))
-      return { pending: 0, processing: 0, completed: 0 };
-
-    const counts = {
-      pending: orders.filter((order) => order?.status === ORDER_STATUS.PENDING)
-        .length,
-      processing: orders.filter(
-        (order) => order?.status === ORDER_STATUS.PROCESSING
-      ).length,
-      completed: orders.filter(
-        (order) =>
-          order?.status === ORDER_STATUS.COMPLETED ||
-          order?.status === ORDER_STATUS.PAID
-      ).length,
-    };
-    return counts;
-  }, [orders]);
 
   // Filter orders based on selected status
   const filteredOrders = useMemo(() => {
@@ -101,6 +62,26 @@ export default function OrdersClientWrapper() {
       }
     });
   }, [orders, status]);
+
+  // Memoize order counts to prevent unnecessary recalculations
+  const orderCounts = useMemo(() => {
+    if (!Array.isArray(orders))
+      return { pending: 0, processing: 0, completed: 0 };
+
+    const counts = {
+      pending: orders.filter((order) => order?.status === ORDER_STATUS.PENDING)
+        .length,
+      processing: orders.filter(
+        (order) => order?.status === ORDER_STATUS.PROCESSING
+      ).length,
+      completed: orders.filter(
+        (order) =>
+          order?.status === ORDER_STATUS.COMPLETED ||
+          order?.status === ORDER_STATUS.PAID
+      ).length,
+    };
+    return counts;
+  }, [orders]);
 
   const NoOrdersMessage = () => (
     <div className="w-full flex flex-col items-center justify-center p-8 text-gray-500">

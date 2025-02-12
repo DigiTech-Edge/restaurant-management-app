@@ -80,20 +80,21 @@ export default function MenuItemModal({
       if (editingItem) {
         await updateMenuItem(editingItem.id, {
           ...data,
-          price: parseFloat(data.price),
+          price: Number(data.price),
         });
         toast.success("Menu item updated successfully");
       } else {
         await createMenuItem({
           ...data,
-          price: parseFloat(data.price),
+          price: Number(data.price),
         });
         toast.success("Menu item created successfully");
       }
       onSuccess();
       handleClose();
-    } catch (error) {
-      toast.error("Failed to save menu item");
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to save menu item";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +186,7 @@ export default function MenuItemModal({
                     <Switch
                       isSelected={value}
                       onValueChange={onChange}
-                      color="success"
+                      color="danger"
                     />
                   </div>
                 )}

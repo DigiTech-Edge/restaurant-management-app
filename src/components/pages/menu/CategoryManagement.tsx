@@ -69,8 +69,9 @@ export default function CategoryManagement({
         toast.success("Category created successfully");
       }
       handleClose();
-    } catch (error) {
-      toast.error("Failed to save category");
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to save category";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +84,9 @@ export default function CategoryManagement({
       await deleteCategory(editingCategoryId);
       toast.success("Category deleted successfully");
       handleClose();
-    } catch (error) {
-      toast.error("Failed to delete category. It may be in use by menu items.");
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to delete category";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
       setIsDeleteModalOpen(false);

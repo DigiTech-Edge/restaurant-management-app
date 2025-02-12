@@ -14,6 +14,7 @@ import InvoiceModal from "./InvoiceModal";
 import { updateOrderStatus } from "@/services/order.service";
 import { ORDER_STATUS } from "@/lib/constants";
 import toast from "react-hot-toast";
+import { mutate } from "swr";
 
 interface OrderItem {
   name: string;
@@ -62,11 +63,11 @@ const OrderCard: React.FC<OrderCardProps> = ({
           : ORDER_STATUS.COMPLETED;
 
       await updateOrderStatus(orderId, newStatus);
-
+      mutate("orders-data");
       toast.success("Status updated successfully");
-    } catch (error) {
-      toast.error("Failed to update status");
-      console.error("Failed to update status:", error);
+    } catch (error: any) {
+      const errorMessage = error?.message || "Failed to update status";
+      toast.error(errorMessage);
     } finally {
       setIsProcessing(false);
     }
