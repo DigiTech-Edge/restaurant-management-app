@@ -71,7 +71,8 @@ export async function updateCategory(id: string, data: UpdateCategoryRequest) {
       throw new Error("Unauthorized");
     }
 
-    const response = await axios.patch(`/main/update-category/${id}`, data, {
+    console.log(id, data);
+    const response = await axios.put(`/main/update-category/${id}`, data, {
       headers: {
         Authorization: `${session.user.accessToken}`,
       },
