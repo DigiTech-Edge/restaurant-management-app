@@ -6,7 +6,7 @@ import * as z from "zod";
 import { updatePassword } from "@/services/auth.service";
 import { toast } from "react-hot-toast";
 import { useSession } from "next-auth/react";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 
 const passwordSchema = z
   .object({
@@ -26,6 +26,9 @@ type PasswordFormData = z.infer<typeof passwordSchema>;
 const PasswordSettings: React.FC = () => {
   const { data: session } = useSession();
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -77,13 +80,27 @@ const PasswordSettings: React.FC = () => {
             <div className="space-y-2">
               <Input
                 {...register("oldPassword")}
-                type="password"
+                type={showOldPassword ? "text" : "password"}
                 label="Current Password"
                 placeholder="Enter your current password"
                 errorMessage={errors.oldPassword?.message}
+                isInvalid={!!errors.oldPassword}
                 classNames={{
                   label: "text-sm font-medium text-gray-700",
                 }}
+                endContent={
+                  <button
+                    type="button"
+                    onClick={() => setShowOldPassword(!showOldPassword)}
+                    className="focus:outline-none"
+                  >
+                    {showOldPassword ? (
+                      <FaEyeSlash className="text-gray-400" />
+                    ) : (
+                      <FaEye className="text-gray-400" />
+                    )}
+                  </button>
+                }
               />
               <p className="text-xs text-gray-500">
                 Enter your current password to verify it&apos;s you
@@ -93,13 +110,27 @@ const PasswordSettings: React.FC = () => {
             <div className="space-y-2">
               <Input
                 {...register("newPassword")}
-                type="password"
+                type={showNewPassword ? "text" : "password"}
                 label="New Password"
                 placeholder="Enter your new password"
                 errorMessage={errors.newPassword?.message}
+                isInvalid={!!errors.newPassword}
                 classNames={{
                   label: "text-sm font-medium text-gray-700",
                 }}
+                endContent={
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="focus:outline-none"
+                  >
+                    {showNewPassword ? (
+                      <FaEyeSlash className="text-gray-400" />
+                    ) : (
+                      <FaEye className="text-gray-400" />
+                    )}
+                  </button>
+                }
               />
               <p className="text-xs text-gray-500">
                 Password must be at least 8 characters long
@@ -108,13 +139,27 @@ const PasswordSettings: React.FC = () => {
 
             <Input
               {...register("confirmPassword")}
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               label="Confirm New Password"
               placeholder="Confirm your new password"
               errorMessage={errors.confirmPassword?.message}
+              isInvalid={!!errors.confirmPassword}
               classNames={{
                 label: "text-sm font-medium text-gray-700",
               }}
+              endContent={
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="focus:outline-none"
+                >
+                  {showConfirmPassword ? (
+                    <FaEyeSlash className="text-gray-400" />
+                  ) : (
+                    <FaEye className="text-gray-400" />
+                  )}
+                </button>
+              }
             />
           </div>
 
