@@ -128,3 +128,19 @@ export async function updateProfile(
     handleApiError(error);
   }
 }
+
+export async function verifyEmail(email: string, verificationCode: string) {
+  try {
+    const response = await axios.post(
+      "/auth/verify-email",
+      {
+        email,
+        verificationCode,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+  }
+}

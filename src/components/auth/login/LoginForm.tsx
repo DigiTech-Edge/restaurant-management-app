@@ -25,10 +25,13 @@ const LoginForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [otp, setOtp] = useState("");
 
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -63,7 +66,8 @@ const LoginForm = () => {
       });
 
       if (result?.error) {
-        toast.error("Invalid credentials");
+        toast.error("Enter OTP Received on your email");
+        setShowOtpInput(true);
         return;
       }
 
@@ -90,6 +94,56 @@ const LoginForm = () => {
       setIsGoogleLoading(false);
     }
   };
+
+  const handleVerifyOtpAndLogin = async () => {
+    if (!otp || !watch("email")) {
+      toast.error("Please enter the OTP and email");
+      return;
+    }
+  
+    setIsLoading(true);
+  
+    try {
+      const response = await fetch("/api/verify-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: watch("email"),
+          verificationCode: otp,
+        }),
+      });
+  
+      const result = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(result.message || "Verification failed");
+      }
+  
+      const { restaurantData } = result;
+  
+      const loginResult = await signIn("credentials", {
+        email: restaurantData.email,
+        password: "dummy",
+        redirect: false,
+        callbackUrl: "/",
+      });
+  
+      if (loginResult?.error) {
+        throw new Error("Login failed");
+      }
+  
+      toast.success("Login successful");
+      router.push("/");
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
 
   return (
     <AuthCard
@@ -136,6 +190,33 @@ const LoginForm = () => {
               </button>
             }
           />
+          {showOtpInput && (
+            <>
+              <div className="flex justify-between items-center">
+                <label className="text-sm text-[#5f0101]">OTP</label>
+                <span className="text-xs text-red-500">Check your mail for OTP</span>
+              </div>
+              <Input
+                type="text"
+                placeholder="Enter OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                isDisabled={isLoading}
+                classNames={{
+                  inputWrapper: "h-11",
+                }}
+              />
+              <Button
+                type="button"
+                className="w-full"
+                onClick={handleVerifyOtpAndLogin}
+                isLoading={isLoading}
+              >
+                Verify OTP and Login
+              </Button>
+            </>
+          )}
+
           <Link
             href="/forgot-password"
             className="text-[12px] text-[#5f0101] hover:underline flex justify-end"
@@ -153,17 +234,19 @@ const LoginForm = () => {
             Remember for 30 days
           </Checkbox>
         </div> */}
-        <Button
-          type="submit"
-          color="danger"
-          className="w-full bg-[#5f0101]"
-          size="lg"
-          isLoading={isLoading}
-        >
-          Sign In
-        </Button>
-        <div className="text-center text-sm text-gray-500">or</div>
-        <Button
+        {!showOtpInput && (
+          <Button
+            type="submit"
+            color="danger"
+            className="w-full bg-[#5f0101]"
+            size="lg"
+            isLoading={isLoading}
+          >
+            Sign In
+          </Button>
+        )}
+        {/* <div className="text-center text-sm text-gray-500">or</div> */}
+        {/* <Button
           type="button"
           variant="bordered"
           className="w-full border-[#5f0101] text-[#5f0101]"
@@ -173,7 +256,7 @@ const LoginForm = () => {
           onPress={handleGoogleSignIn}
         >
           Sign in with Google
-        </Button>
+        </Button> */}
       </form>
     </AuthCard>
   );
