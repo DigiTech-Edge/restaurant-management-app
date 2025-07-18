@@ -189,10 +189,7 @@ export default function MenuClientWrapper({
         isOpen={isModalOpen}
         onClose={handleModalClose}
         editingCategoryId={editingCategory}
-        initialCategory={
-          data?.categories.find((cat) => cat.id === editingCategory)?.name
-        }
-      />
+        initialCategory={data?.categories.find((cat) => cat.id === editingCategory)?.name} categories={[]}      />
     </>
   );
 }

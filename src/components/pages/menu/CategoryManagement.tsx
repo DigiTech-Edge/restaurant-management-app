@@ -6,7 +6,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
-  Input,
+  Select, SelectItem
 } from "@nextui-org/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,9 +19,10 @@ import {
 import { FiTrash2 } from "react-icons/fi";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import toast from "react-hot-toast";
+import { categories } from "@/lib/constants/index";
 
 const schema = z.object({
-  name: z.string().min(1, "Category name is required"),
+  name: z.string().min(1, "Please select a category"),
 });
 
 interface CategoryManagementProps {
@@ -29,6 +30,7 @@ interface CategoryManagementProps {
   onClose: () => void;
   editingCategoryId?: string;
   initialCategory?: string;
+  categories: string[];
 }
 
 export default function CategoryManagement({
@@ -121,13 +123,24 @@ export default function CategoryManagement({
               </div>
             </ModalHeader>
             <ModalBody>
-              <Input
-                {...register("name")}
-                label="Category Name"
-                isInvalid={!!errors.name}
-                errorMessage={errors.name?.message}
-                isDisabled={isLoading}
-              />
+            <Select
+              label="Category"
+              isInvalid={!!errors.name}
+              errorMessage={errors.name?.message}
+              isDisabled={isLoading}
+              {...register("name")}
+              defaultSelectedKeys={initialCategory ? [initialCategory] : []}
+              onChange={(e) => reset({ name: e.target.value })}
+            >
+              {categories.map((cat) => (
+                <SelectItem key={cat.name} value={cat.name} textValue={cat.name}>
+                <div className="flex items-center gap-2">
+                  <img src={`/images/category/${cat.icon}.png`} alt="" className="w-4 h-4" />
+                  {cat.name}
+                </div>
+              </SelectItem>                           
+              ))}
+            </Select>
             </ModalBody>
             <ModalFooter>
               <Button
